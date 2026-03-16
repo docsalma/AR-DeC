@@ -1,0 +1,32 @@
+% ==============================================================================
+% Section 1: Introduction
+% ==============================================================================
+
+\section{Introduction}
+\label{sec:introduction}
+
+Reading comprehension is a foundational skill for academic success across all disciplines, yet a substantial body of research indicates that many university students struggle with the vocabulary demands of domain-specific texts \cite{vanlehn2011, bloom1984}. Academic materials frequently introduce specialised terminology at a pace that exceeds learners' capacity for incidental acquisition, leading to comprehension breakdowns that compound over time. Traditional vocabulary instruction, whether through glossaries, dictionary lookups, or pre-reading activities, disrupts the natural flow of reading and imposes a cognitive overhead that can diminish both motivation and retention \cite{anderson2001}.
+
+The proliferation of smartphones with advanced cameras and processing capabilities has opened new avenues for situated, just-in-time learning support. Augmented reality (AR) technology, in particular, has demonstrated significant promise in educational contexts by overlaying digital information onto the physical world, thereby reducing the gap between abstract concepts and tangible experience \cite{azuma1997, wu2013, akccayir2017}. Concurrently, intelligent tutoring systems (ITS) have established a strong evidence base for their ability to approximate the effectiveness of human one-to-one tutoring through adaptive content delivery and learner modelling \cite{kulik2016, corbett1994}. Furthermore, gamification---the application of game design elements in non-game contexts---has been shown to enhance learner engagement, persistence, and intrinsic motivation when thoughtfully integrated into educational platforms \cite{deterding2011}.
+
+Despite the demonstrated benefits of each approach individually, the educational technology landscape reveals a notable gap: no existing mobile platform integrates AR-based contextual visualisation, adaptive intelligent tutoring, on-device OCR scanning, and gamification mechanics into a single, unified reading comprehension tool. Prior AR educational applications have typically focused on science visualisation \cite{ibanezmolina2018} or museum experiences \cite{bacca2014}, without incorporating adaptive tutoring logic. Existing ITS platforms, meanwhile, generally operate within desktop or web environments and lack the situated, camera-mediated interaction model that AR affords \cite{du2020}. Gamified learning applications often employ reward mechanics superficially, without grounding them in established motivational theory or coupling them with personalised content adaptation \cite{ryan2000}.
+
+This paper addresses this gap by presenting AR-DeC (Augmented Reality Didactic Companion), a mobile application designed to support vocabulary acquisition and reading comprehension through the synergistic integration of four technological pillars: (1) on-device OCR for seamless text scanning, (2) an adaptive ITS engine employing Bayesian Knowledge Tracing and Bloom's Taxonomy for personalised content delivery, (3) AR overlays for contextual, in-situ visualisation of word explanations, and (4) a gamification system grounded in Keller's ARCS motivational model. The research is guided by three research questions:
+
+\begin{enumerate}[label=\textbf{RQ\arabic*:}]
+    \item How does the use of AR-DeC affect university students' vocabulary acquisition compared to traditional reading methods?
+    \item To what extent does the integrated gamification system impact student engagement and sustained usage of the platform?
+    \item How does the adaptive ITS component influence learning outcomes across students with varying prior knowledge levels?
+\end{enumerate}
+
+The primary objectives of this research are threefold. First, we aim to design and implement a technically robust mobile platform that demonstrates the feasibility of integrating AR, OCR, ITS, and gamification in a single application. Second, we seek to ground the system design in established learning theories---specifically the ARCS motivational model and Bloom's revised taxonomy---to ensure pedagogical soundness. Third, we plan to evaluate the system's effectiveness through a rigorous Design-Based Research (DBR) methodology involving university students in authentic reading tasks.
+
+The contributions of this paper are as follows:
+\begin{itemize}
+    \item A novel system architecture integrating on-device OCR, adaptive ITS with Bayesian Knowledge Tracing, AR rendering, and theoretically-grounded gamification in a cross-platform mobile application.
+    \item A detailed technical implementation using React Native, Expo, Google ML Kit, ViroReact, Zustand, and Firebase, providing a reproducible blueprint for researchers and practitioners.
+    \item A theoretically-motivated design mapping ARCS model components and Bloom's taxonomy levels to specific system features and interaction patterns.
+    \item A comprehensive DBR evaluation plan with validated instruments for assessing vocabulary acquisition, engagement, and usability.
+\end{itemize}
+
+The remainder of this paper is organised as follows. \Cref{sec:literature} reviews the relevant literature on AR in education, intelligent tutoring systems, gamification, and mobile reading applications. \Cref{sec:framework} presents the theoretical framework underpinning AR-DeC's design. \Cref{sec:architecture} describes the system architecture and technology stack. \Cref{sec:implementation} details the technical implementation of each component. \Cref{sec:methodology} outlines the planned evaluation methodology. \Cref{sec:results} and \Cref{sec:discussion} present results and discussion (to be completed following the evaluation study). Finally, \Cref{sec:conclusion} summarises contributions and outlines future work.

@@ -1,0 +1,96 @@
+% ==============================================================================
+% AR-DeC: Augmented Reality Didactic Companion
+% Main LaTeX Document
+% ==============================================================================
+
+\documentclass[12pt]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{subcaption}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{pdflscape}
+
+% --- TikZ Libraries ---
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc}
+
+% --- pgfplots ---
+\pgfplotsset{compat=1.18}
+
+% --- Page Setup ---
+\geometry{a4paper, margin=2.5cm}
+\onehalfspacing
+
+% --- Hyperref Setup ---
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    citecolor=green!50!black,
+    urlcolor=blue!70!black,
+    pdftitle={AR-DeC: An Augmented Reality Didactic Companion},
+    pdfauthor={Author Names},
+}
+
+% ==============================================================================
+% Document
+% ==============================================================================
+\begin{document}
+
+% --- Title ---
+\title{AR-DeC: An Augmented Reality Didactic Companion Integrating OCR, Intelligent Tutoring, and Gamification for Mobile Reading Comprehension}
+
+% --- Authors ---
+\author{
+    First Author\textsuperscript{1} \and
+    Second Author\textsuperscript{2} \and
+    Third Author\textsuperscript{1}
+}
+
+\date{
+    \textsuperscript{1}Department of Computer Science, University Name, City, Country \\
+    \textsuperscript{2}Department of Education, University Name, City, Country \\[1em]
+    \texttt{corresponding.author@university.edu}
+}
+
+\maketitle
+
+% --- Abstract ---
+\input{sections/abstract}
+
+% --- Keywords ---
+\medskip
+\noindent\textbf{Keywords:} Augmented Reality; Intelligent Tutoring Systems; Gamification; Mobile Learning; OCR; Reading Comprehension; Vocabulary Acquisition; Adaptive Learning
+
+% --- Sections ---
+\input{sections/introduction}
+\input{sections/literature}
+\input{sections/framework}
+\input{sections/architecture}
+\input{sections/implementation}
+\input{sections/methodology}
+\input{sections/results}
+\input{sections/discussion}
+\input{sections/conclusion}
+
+% --- References ---
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

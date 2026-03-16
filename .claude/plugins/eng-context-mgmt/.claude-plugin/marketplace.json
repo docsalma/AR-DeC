@@ -1,0 +1,13 @@
+{
+  "name": "ar-dec-local",
+  "displayName": "AR-DeC Local Plugins",
+  "description": "Local plugins for the AR-DeC project",
+  "plugins": [
+    {
+      "name": "eng-context-mgmt",
+      "version": "1.0.0",
+      "description": "Engineering context management agent with project tracking, memory management, and daily briefings",
+      "path": "."
+    }
+  ]
+}

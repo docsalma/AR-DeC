@@ -1,0 +1,85 @@
+@startuml activity-diagram
+!theme plain
+skinparam ActivityBorderColor #555555
+skinparam ActivityBackgroundColor #E3F2FD
+skinparam ActivityDiamondBorderColor #555555
+skinparam ActivityDiamondBackgroundColor #FFF9C4
+skinparam ArrowColor #555555
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 11
+skinparam dpi 150
+
+|#E3F2FD|Session|
+start
+
+:Launch App;
+
+:Check Streak;
+
+fork
+  :Update Daily Goal;
+fork again
+  :Display Home Screen;
+end fork
+
+:Open Camera;
+
+|#E3F2FD|Scanning|
+repeat
+  :Capture Text;
+  :OCR Processing;
+  :Text Extraction;
+  :Word Tokenization;
+
+  if (Words found?) then (yes)
+    |#F3E5F5|ITS Processing|
+    :Student Model Lookup\nGet P(L_n);
+
+    if (P(L_n) < threshold?) then (yes)
+      :ITS Generate Explanation\nSelect Bloom's Level;
+      :AR Display Overlay;
+
+      fork
+        :Award Scan Points\n+5 pts;
+      fork again
+        if (Student taps word?) then (yes)
+          :Show Detailed\nExplanation;
+
+          switch (Need help?)
+            case (Quick question)
+              :Conversational\nAgent;
+            case (Deep explanation)
+              :Intelligent\nTutor;
+            case (Complex problem)
+              :Escalate to\nTeacher;
+            case (No)
+          endswitch
+        else (no)
+        endif
+      end fork
+    else (no — mastered)
+    endif
+
+    |#FFF3E0|Quiz|
+    if (Take quiz?) then (yes)
+      :Generate Quiz\nfrom Scanned Words;
+      :Answer Questions\n15s timer;
+      :Update Mastery\nvia BKT;
+      :Award Quiz Points\nCheck Badges;
+    else (no)
+    endif
+
+  else (no)
+    :Display\n"No text detected";
+  endif
+
+  |#E3F2FD|Session|
+repeat while (Continue session?) is (yes)
+->no;
+
+:Sync to Backend;
+
+stop
+
+@enduml

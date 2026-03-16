@@ -1,0 +1,78 @@
+% ==============================================================================
+% TikZ Data Flow Diagram
+% ==============================================================================
+
+\begin{tikzpicture}[
+    node distance=1.2cm,
+    step/.style={
+        rectangle,
+        draw=#1!60!black,
+        fill=#1!12,
+        rounded corners=3pt,
+        minimum width=3cm,
+        minimum height=0.9cm,
+        align=center,
+        font=\small,
+        line width=0.8pt
+    },
+    branch/.style={
+        rectangle,
+        draw=#1!60!black,
+        fill=#1!12,
+        rounded corners=3pt,
+        minimum width=2.8cm,
+        minimum height=0.9cm,
+        align=center,
+        font=\small,
+        line width=0.8pt
+    },
+    arrow/.style={
+        -Stealth,
+        thick,
+        color=#1!60!black
+    },
+    note/.style={
+        font=\scriptsize\itshape,
+        color=gray!70!black
+    }
+]
+
+% --- Main Pipeline (vertical) ---
+\node[step=gray] (camera) {Camera Capture};
+\node[step=blue, below=of camera] (ocr) {OCR Processing};
+\node[step=blue, below=of ocr] (extract) {Text Extraction};
+\node[step=blue, below=of extract] (tokenize) {Word Tokenisation};
+\node[step=purple, below=of tokenize] (lookup) {Student Model Lookup};
+\node[step=purple, below=of lookup] (its) {ITS Analysis};
+
+% --- Branching outputs ---
+\node[branch=teal, below left=1.5cm and 0.5cm of its] (ar_display) {AR Display};
+\node[branch=orange, below=1.5cm of its] (gamification) {Gamification\\Update};
+\node[branch=red, below right=1.5cm and 0.5cm of its] (student_update) {Student Model\\Update};
+
+% --- Main arrows ---
+\draw[arrow=gray] (camera) -- node[right, note] {30 fps} (ocr);
+\draw[arrow=blue] (ocr) -- node[right, note] {text blocks + bbox} (extract);
+\draw[arrow=blue] (extract) -- node[right, note] {raw strings} (tokenize);
+\draw[arrow=blue] (tokenize) -- node[right, note] {filtered tokens} (lookup);
+\draw[arrow=purple] (lookup) -- node[right, note] {$P(L_n)$ per word} (its);
+
+% --- Branch arrows ---
+\draw[arrow=teal] (its.south) -- ++(0,-0.5) -| (ar_display.north) node[pos=0.25, above, note] {content + position};
+\draw[arrow=orange] (its) -- node[right, note] {events} (gamification);
+\draw[arrow=red] (its.south) -- ++(0,-0.5) -| (student_update.north) node[pos=0.25, above, note] {interaction data};
+
+% --- Feedback loop ---
+\draw[arrow=red, dashed] (student_update.east) -- ++(1.5,0) |- (lookup.east)
+    node[pos=0.25, right, note] {updated $P(L_n)$};
+
+% --- Timing annotations ---
+\node[note, left=0.3cm of camera] {$t_0$};
+\node[note, left=0.3cm of ocr] {$t_0 + 50$ms};
+\node[note, left=0.3cm of extract] {$t_0 + 200$ms};
+\node[note, left=0.3cm of tokenize] {$t_0 + 220$ms};
+\node[note, left=0.3cm of lookup] {$t_0 + 250$ms};
+\node[note, left=0.3cm of its] {$t_0 + 350$ms};
+\node[note, below=0.1cm of ar_display] {$t_0 + 500$ms};
+
+\end{tikzpicture}

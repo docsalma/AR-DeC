@@ -1,0 +1,112 @@
+% ==============================================================================
+% UML Sequence Diagram — AR-DeC Scan-Learn-Quiz Cycle
+% ==============================================================================
+\begin{tikzpicture}[
+    font=\scriptsize,
+    lifeline/.style={dashed, gray},
+    msg/.style={-Stealth, thick},
+    ret/.style={-Stealth, dashed, thick},
+    frag/.style={draw=black, rounded corners=2pt, inner sep=4pt},
+    fraglbl/.style={font=\tiny\bfseries, fill=white, draw=black, inner sep=2pt},
+    note/.style={draw=gray, fill=yellow!10, rounded corners=2pt, font=\tiny, align=left, inner sep=3pt},
+    self/.style={-Stealth, thick}
+]
+
+% ─── Lifeline positions ────────────────────────────────────────────────────
+\def\LS{0}        % Student
+\def\LC{3}        % CameraModule
+\def\LT{6}        % TutoringEngine
+\def\LA{9}        % ARRenderer
+\def\LM{12}       % StudentModel
+\def\LG{15}       % GamificationEngine
+
+% ─── Lifeline headers ──────────────────────────────────────────────────────
+\node[draw, fill=blue!15, minimum width=2cm, minimum height=0.6cm] (hs) at (\LS, 0) {\textbf{Student}};
+\node[draw, fill=violet!15, minimum width=2cm, minimum height=0.6cm] (hc) at (\LC, 0) {\textbf{CameraModule}};
+\node[draw, fill=violet!15, minimum width=2cm, minimum height=0.6cm] (ht) at (\LT, 0) {\textbf{TutoringEngine}};
+\node[draw, fill=teal!15, minimum width=2cm, minimum height=0.6cm] (ha) at (\LA, 0) {\textbf{ARRenderer}};
+\node[draw, fill=orange!15, minimum width=2cm, minimum height=0.6cm] (hm) at (\LM, 0) {\textbf{StudentModel}};
+\node[draw, fill=red!15, minimum width=2.2cm, minimum height=0.6cm] (hg) at (\LG, 0) {\textbf{Gamification}};
+
+% ─── Lifelines ──────────────────────────────────────────────────────────────
+\def\LEnd{-22}
+\draw[lifeline] (\LS, -0.3) -- (\LS, \LEnd);
+\draw[lifeline] (\LC, -0.3) -- (\LC, \LEnd);
+\draw[lifeline] (\LT, -0.3) -- (\LT, \LEnd);
+\draw[lifeline] (\LA, -0.3) -- (\LA, \LEnd);
+\draw[lifeline] (\LM, -0.3) -- (\LM, \LEnd);
+\draw[lifeline] (\LG, -0.3) -- (\LG, \LEnd);
+
+% ═══════════════════════════════════════════════════════════════════════════
+% par [Learning Session]
+% ═══════════════════════════════════════════════════════════════════════════
+\node[fraglbl] at (-0.8, -1.0) {par};
+\draw[frag] (-1, -1.3) rectangle (16.2, -15.5);
+\node[font=\tiny\itshape, anchor=west] at (-0.8, -1.5) {Learning session};
+
+% ─── Scanning Phase ─────────────────────────────────────────────────────────
+\draw[msg] (\LS, -2.0) -- node[above] {1: captureFrame()} (\LC, -2.0);
+\draw[self] (\LC+0.1, -2.5) -- ++(0.8,0) -- ++(0,-0.4) -- ++(-0.8,0) node[right, pos=0, xshift=0.9cm, font=\tiny] {2: extractText()};
+\draw[self] (\LC+0.1, -3.2) -- ++(0.8,0) -- ++(0,-0.4) -- ++(-0.8,0) node[right, pos=0, xshift=0.9cm, font=\tiny] {3: tokenizeWords()};
+\draw[ret] (\LC, -4.0) -- node[above] {4: return detectedWords[]} (\LS, -4.0);
+
+% ─── ITS Phase ──────────────────────────────────────────────────────────────
+\draw[msg] (\LS, -4.8) -- node[above] {5: requestExplanation(word, context)} (\LT, -4.8);
+\draw[msg] (\LT, -5.4) -- node[above] {6: getMastery(word)} (\LM, -5.4);
+\draw[ret] (\LM, -5.9) -- node[above] {7: return $P(L_n)$} (\LT, -5.9);
+\draw[self] (\LT+0.1, -6.4) -- ++(0.8,0) -- ++(0,-0.4) -- ++(-0.8,0) node[right, pos=0, xshift=0.9cm, font=\tiny] {8: selectBloomsLevel()};
+
+% ─── AR Phase ───────────────────────────────────────────────────────────────
+\draw[msg] (\LT, -7.2) -- node[above] {9: displayOverlay(content, position)} (\LA, -7.2);
+\draw[msg] (\LA, -7.8) -- node[above] {10: renderARAnnotation()} (\LS, -7.8);
+
+% ─── Gamification Phase ────────────────────────────────────────────────────
+\draw[msg] (\LT, -8.5) -- node[above] {11: onWordScanned(word)} (\LG, -8.5);
+\draw[self] (\LG+0.1, -9.0) -- ++(0.8,0) -- ++(0,-0.4) -- ++(-0.8,0) node[right, pos=0, xshift=0.9cm, font=\tiny] {12: addPoints(+5)};
+\draw[msg] (\LG, -9.8) -- node[above] {13: showPointsAnimation(+5)} (\LS, -9.8);
+
+% ─── Mastery Update ────────────────────────────────────────────────────────
+\draw[msg] (\LT, -10.5) -- node[above] {14: updateAfterInteraction(word)} (\LM, -10.5);
+
+% ═══════════════════════════════════════════════════════════════════════════
+% opt [Student requests quiz]
+% ═══════════════════════════════════════════════════════════════════════════
+\node[fraglbl] at (-0.8, -11.5) {opt};
+\draw[frag] (-1, -11.8) rectangle (16.2, -15.2);
+\node[font=\tiny\itshape, anchor=west] at (-0.8, -12.0) {Student requests quiz};
+
+\draw[msg] (\LS, -12.5) -- node[above] {15: startQuiz(recentWords)} (\LG, -12.5);
+\draw[ret] (\LG, -13.0) -- node[above] {16: presentQuestion()} (\LS, -13.0);
+\draw[msg] (\LS, -13.5) -- node[above] {17: submitAnswer(questionId, answer)} (\LG, -13.5);
+\draw[msg] (\LG, -14.0) -- node[above] {18: updateMastery(word, correct)} (\LM, -14.0);
+\draw[ret] (\LG, -14.7) -- node[above] {19: showResult(score, badges)} (\LS, -14.7);
+
+% ═══════════════════════════════════════════════════════════════════════════
+% opt [Need help?]
+% ═══════════════════════════════════════════════════════════════════════════
+\node[fraglbl] at (-0.8, -16.0) {opt};
+\draw[frag] (-1, -16.3) rectangle (16.2, -21.5);
+\node[font=\tiny\itshape, anchor=west] at (-0.8, -16.5) {Need help?};
+
+% Alt: quick question
+\draw[dashed] (-0.9, -17.8) -- (16.1, -17.8);
+\draw[dashed] (-0.9, -19.5) -- (16.1, -19.5);
+\node[font=\tiny, anchor=west] at (-0.5, -16.8) {[A quick question]};
+\draw[msg] (\LS, -17.3) -- node[above] {20: askQuestion(text)} (\LT, -17.3);
+\draw[ret] (\LT, -17.6) -- node[above] {21: return quickAnswer} (\LS, -17.6);
+
+% Alt: deeper explanation
+\node[font=\tiny, anchor=west] at (-0.5, -18.1) {[Need deeper explanation]};
+\draw[msg] (\LS, -18.6) -- node[above] {22: requestDetailedHelp(word)} (\LT, -18.6);
+\draw[msg] (\LT, -19.0) -- node[above] {23: scaffoldedContent()} (\LA, -19.0);
+\draw[msg] (\LA, -19.3) -- node[above] {24: displayDetailedAR()} (\LS, -19.3);
+
+% Alt: escalate
+\node[font=\tiny, anchor=west] at (-0.5, -19.8) {[Complex problem]};
+\draw[msg] (\LS, -20.3) -- node[above, font=\tiny] {25: escalateToTeacher(word, context)} (7.5, -20.3);
+
+\node[note, anchor=west] at (7.8, -20.7) {Teacher receives\\notification with\\learner context};
+
+\draw[ret] (7.5, -21.2) -- node[above, font=\tiny] {26: provideGuidance()} (\LS, -21.2);
+
+\end{tikzpicture}

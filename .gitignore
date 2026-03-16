@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+
+# Expo / Metro
+.expo/
+dist/
+_expo/
+web-build/
+
+# Research data (PDFs, Zotero exports — too large for git)
+.claude/used-Data/
+.claude/data zotero/
+
+# RAG Docker volumes
+rag/data/
+
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.pdf
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Environment
+.env*.local
+*.pem

@@ -1,0 +1,53 @@
+flowchart LR
+    subgraph Actors
+        S(("👤 Student"))
+        T(("👤 Teacher"))
+    end
+
+    subgraph AR-DeC System
+        direction TB
+        UC1["Scan Text\n(OCR)"]
+        UC2["View Word\nExplanation"]
+        UC3["View in AR"]
+        UC4["Take Vocabulary\nQuiz"]
+        UC5["View Progress\n& Badges"]
+        UC6["Request\nHelp-Clarification"]
+
+        UC7["Define\nVocabulary Lists"]
+        UC8["Assign Learning\nActivities"]
+        UC9["View Learner\nAnalytics"]
+        UC10["Provide\nFeedback"]
+        UC11["Manage Learning\nResources"]
+
+        UC12["Process OCR"]
+        UC13["Adapt Content to\nBloom's Level"]
+        UC14["Track Mastery\nvia BKT"]
+        UC15["Award Points\n& Badges"]
+
+        UC16["Interact with\nConversational Agent"]
+        UC17["Consult\nIntelligent Tutor"]
+        UC18["Escalate to\nTeacher"]
+    end
+
+    S --- UC1
+    S --- UC2
+    S --- UC3
+    S --- UC4
+    S --- UC5
+    S --- UC6
+
+    T --- UC7
+    T --- UC8
+    T --- UC9
+    T --- UC10
+    T --- UC11
+
+    UC1 -.->|"«include»"| UC12
+    UC2 -.->|"«include»"| UC13
+    UC1 -.->|"«include»"| UC14
+    UC4 -.->|"«include»"| UC15
+    UC9 -.->|"«include»"| UC14
+
+    UC16 -.->|"«extend»"| UC6
+    UC17 -.->|"«extend»"| UC6
+    UC18 -.->|"«extend»"| UC6

@@ -1,0 +1,80 @@
+% ==============================================================================
+% Section 6: Methodology
+% ==============================================================================
+
+\section{Methodology}
+\label{sec:methodology}
+
+This section describes the planned evaluation methodology for AR-DeC, following a Design-Based Research (DBR) approach. DBR is an iterative methodology that integrates design, development, and evaluation within authentic educational contexts, producing both practical artefacts and theoretical contributions \cite{dede2009}.
+
+\subsection{Research Design}
+\label{subsec:research_design}
+
+The evaluation employs a quasi-experimental pre-test/post-test design with a control group. The experimental group uses AR-DeC during their regular reading activities over a four-week intervention period, while the control group continues with conventional reading practices supplemented by standard dictionary access. The study follows a mixed-methods approach, combining quantitative measures of vocabulary acquisition and engagement with qualitative data on user experience and perceived usefulness.
+
+\subsection{Participants}
+\label{subsec:participants}
+
+The planned sample consists of 30--50 university students enrolled in undergraduate programmes where substantial domain-specific reading is required (e.g., biology, psychology, engineering). Participants will be recruited through convenience sampling from a single university, with the following inclusion criteria:
+\begin{itemize}
+    \item Enrolled in a course requiring regular academic reading in English
+    \item Ownership of a smartphone compatible with AR-DeC (Android 8.0+ with ARCore support, or iOS 12.0+ with ARKit support)
+    \item No prior experience with AR-based learning applications
+    \item Informed consent to participate in the study and allow anonymised data collection
+\end{itemize}
+
+Participants will be randomly assigned to experimental and control groups, with stratification by self-reported English proficiency level (native, advanced, intermediate) to ensure balanced groups.
+
+\subsection{Instruments}
+\label{subsec:instruments}
+
+Four instruments will be used to assess the research questions:
+
+\begin{enumerate}
+    \item \textbf{Vocabulary Knowledge Scale (VKS)}: A pre- and post-test instrument assessing knowledge of 60 target domain-specific words. For each word, participants indicate their familiarity on a 5-point scale ranging from ``I have never seen this word'' to ``I can use this word accurately in a sentence.'' The VKS has been validated in vocabulary acquisition research and provides both self-report and production-based measures \cite{lan2015}.
+
+    \item \textbf{System Usability Scale (SUS)}: The 10-item SUS questionnaire \cite{brooke1996} will be administered post-intervention to the experimental group to assess the usability of the AR-DeC application. SUS scores range from 0 to 100, with scores above 68 considered above average usability.
+
+    \item \textbf{ARCS Motivation Questionnaire}: A 36-item questionnaire based on Keller's Instructional Materials Motivation Survey (IMMS) \cite{keller2010}, adapted for mobile learning contexts. The instrument measures the four ARCS dimensions (Attention, Relevance, Confidence, Satisfaction) on 5-point Likert scales.
+
+    \item \textbf{Interaction Logs}: AR-DeC automatically logs all user interactions, including scan events (timestamp, number of words recognised, duration), word explanation views (word, duration, Bloom's level), quiz responses (word, response, correctness, reaction time), gamification events (points earned, badges unlocked, streak data), and session metadata (duration, frequency).
+\end{enumerate}
+
+\subsection{Procedure}
+\label{subsec:procedure}
+
+The evaluation follows a five-phase protocol:
+
+\begin{enumerate}
+    \item \textbf{Week 0 -- Baseline}: All participants complete the pre-test VKS and a demographic questionnaire. The experimental group receives a 30-minute orientation session on using AR-DeC, including a guided walkthrough of all features.
+
+    \item \textbf{Weeks 1--4 -- Intervention}: The experimental group uses AR-DeC during their regular study sessions, with a recommended minimum of three sessions per week (15 minutes each). The control group continues with conventional study methods. All participants read the same assigned course materials.
+
+    \item \textbf{Week 4 -- Post-test}: All participants complete the post-test VKS using the same 60 target words. The experimental group additionally completes the SUS and ARCS questionnaires.
+
+    \item \textbf{Week 4 -- Interviews}: Semi-structured interviews (20--30 minutes) are conducted with a purposive sample of 8--10 experimental group participants, selected to represent a range of engagement levels and learning outcomes.
+
+    \item \textbf{Post-study -- Data Analysis}: Quantitative and qualitative data are analysed as described in \Cref{subsec:data_analysis}.
+\end{enumerate}
+
+\subsection{Data Analysis Plan}
+\label{subsec:data_analysis}
+
+\subsubsection{Quantitative Analysis}
+
+\begin{itemize}
+    \item \textbf{RQ1 (Vocabulary Acquisition)}: Pre-/post-test VKS scores will be compared between groups using a mixed-design ANOVA with group (experimental vs. control) as the between-subjects factor and time (pre vs. post) as the within-subjects factor. Effect sizes will be reported using Cohen's $d$. A significant group $\times$ time interaction will indicate differential vocabulary growth attributable to AR-DeC use.
+
+    \item \textbf{RQ2 (Engagement)}: Engagement will be operationalised through interaction log metrics: total sessions, mean session duration, scan frequency, quiz completion rate, and streak length. Descriptive statistics and correlation analyses will examine relationships between gamification engagement (points earned, badges unlocked) and sustained usage over the four-week period.
+
+    \item \textbf{RQ3 (Adaptive Learning)}: Learning outcomes for students with varying prior knowledge will be assessed by stratifying the experimental group into low, medium, and high prior knowledge subgroups based on pre-test VKS scores. A one-way ANOVA will compare post-test gains across subgroups, with the hypothesis that the adaptive ITS will produce more uniform gains across knowledge levels compared to the control condition.
+\end{itemize}
+
+\subsubsection{Qualitative Analysis}
+
+Interview transcripts will be analysed using thematic analysis following Braun and Clarke's six-phase approach: familiarisation, initial coding, theme searching, theme reviewing, theme defining, and report writing. Coding will focus on participants' experiences with each system component (OCR scanning, AR overlays, ITS explanations, gamification elements), perceived learning value, and suggestions for improvement. Two independent coders will code a subset of transcripts, with inter-rater reliability assessed using Cohen's kappa \cite{cohen1960}.
+
+\subsection{Ethical Considerations}
+\label{subsec:ethics}
+
+The study will be submitted for approval to the institutional ethics review board prior to data collection. All participation will be voluntary, with informed consent obtained in writing. Data will be anonymised at the point of collection, with participant identifiers replaced by random codes. Camera images processed by the OCR module will not be stored or transmitted; only the extracted text tokens will be logged. Participants may withdraw at any time without consequence to their academic standing.

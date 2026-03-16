@@ -1,0 +1,90 @@
+% ==============================================================================
+% TikZ System Architecture Diagram
+% ==============================================================================
+
+\begin{tikzpicture}[
+    node distance=1.8cm and 2.5cm,
+    module/.style={
+        rectangle,
+        draw=#1!60!black,
+        fill=#1!15,
+        rounded corners=4pt,
+        minimum width=3.2cm,
+        minimum height=1.2cm,
+        align=center,
+        font=\small\bfseries,
+        line width=1pt
+    },
+    input/.style={
+        rectangle,
+        draw=gray!70,
+        fill=gray!10,
+        rounded corners=4pt,
+        minimum width=2.6cm,
+        minimum height=1cm,
+        align=center,
+        font=\small,
+        line width=0.8pt,
+        dashed
+    },
+    arrow/.style={
+        -Stealth,
+        thick,
+        color=#1!70!black
+    },
+    annot/.style={
+        font=\scriptsize\itshape,
+        color=#1!60!black
+    }
+]
+
+% --- Input ---
+\node[input] (camera) {Camera Feed};
+
+% --- Core Modules ---
+\node[module=blue, right=2cm of camera] (ocr) {OCR Module};
+\node[module=purple, right=2cm of ocr] (its) {ITS Engine};
+\node[module=teal, right=2cm of its] (ar) {AR Renderer};
+
+% --- Supporting Modules ---
+\node[module=orange, below=2cm of its] (gamification) {Gamification\\Engine};
+\node[module=red, below=2cm of ocr] (student) {Student Model};
+
+% --- Output ---
+\node[input, right=2cm of ar] (display) {AR Display};
+
+% --- Backend ---
+\node[input, below=2cm of ar] (firebase) {Firebase\\Backend};
+
+% --- Arrows: Main Pipeline ---
+\draw[arrow=gray] (camera) -- node[above, annot=gray] {frames} (ocr);
+\draw[arrow=blue] (ocr) -- node[above, annot=blue] {tokens} (its);
+\draw[arrow=purple] (its) -- node[above, annot=purple] {content} (ar);
+\draw[arrow=teal] (ar) -- node[above, annot=teal] {overlay} (display);
+
+% --- Arrows: Student Model ---
+\draw[arrow=red] (student) -- node[left, annot=red] {mastery} (ocr);
+\draw[arrow=red] (student) -- node[right, annot=red, xshift=-2mm] {mastery} (its);
+
+% --- Arrows: Gamification ---
+\draw[arrow=orange] (its) -- node[right, annot=orange] {events} (gamification);
+\draw[arrow=orange] (gamification) -- node[below, annot=orange] {rewards} (ar);
+
+% --- Arrows: Updates ---
+\draw[arrow=purple, dashed] (its) -- node[left, annot=purple, xshift=-2mm] {update} (student);
+\draw[arrow=orange, dashed] (gamification) -- node[right, annot=orange] {sync} (firebase);
+\draw[arrow=red, dashed] (student) -- node[above, annot=red] {persist} (firebase);
+
+% --- Background grouping ---
+\begin{scope}[on background layer]
+    \node[
+        fit=(ocr)(its)(ar)(gamification)(student),
+        fill=blue!3,
+        draw=blue!20,
+        rounded corners=8pt,
+        inner sep=12pt,
+        label={[font=\footnotesize\scshape, color=blue!40!black]above:AR-DeC Mobile Application}
+    ] {};
+\end{scope}
+
+\end{tikzpicture}

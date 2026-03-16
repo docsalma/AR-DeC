@@ -1,0 +1,149 @@
+% ==============================================================================
+% UML Activity Diagram — AR-DeC Learning Session
+% ==============================================================================
+\begin{tikzpicture}[
+    node distance=0.7cm and 1.5cm,
+    action/.style={
+        rectangle,
+        rounded corners=4pt,
+        draw=#1!60!black,
+        fill=#1!12,
+        minimum width=2.8cm,
+        minimum height=0.65cm,
+        font=\scriptsize,
+        align=center
+    },
+    action/.default=blue,
+    dec/.style={
+        diamond,
+        draw=black,
+        fill=yellow!15,
+        minimum width=1.2cm,
+        minimum height=1.2cm,
+        font=\scriptsize,
+        align=center,
+        aspect=2.5,
+        inner sep=1pt
+    },
+    startc/.style={circle, fill=black, minimum size=7pt, inner sep=0pt},
+    endc/.style={circle, draw=black, thick, minimum size=9pt, inner sep=0pt,
+        path picture={\fill (path picture bounding box.center) circle (3.5pt);}},
+    forkjoin/.style={rectangle, fill=black, minimum width=2.5cm, minimum height=2.5pt, inner sep=0pt},
+    arr/.style={-Stealth, thick},
+    lbl/.style={font=\tiny\itshape, color=gray!70!black}
+]
+
+% ─── Start ──────────────────────────────────────────────────────────────────
+\node[startc] (start) at (0, 0) {};
+\node[action=gray, below=0.4cm of start] (launch) {Launch App};
+
+% ─── Streak check ──────────────────────────────────────────────────────────
+\node[action=orange, below=of launch] (streak) {Check Streak};
+\node[forkjoin, below=0.4cm of streak] (fork1) {};
+\node[action=orange, below left=0.5cm and 1cm of fork1] (dailygoal) {Update Daily Goal};
+\node[action=gray, below right=0.5cm and 1cm of fork1] (home) {Display Home Screen};
+\node[forkjoin, below=1.8cm of fork1] (join1) {};
+
+% ─── Scanning phase ────────────────────────────────────────────────────────
+\node[action=blue, below=0.5cm of join1] (opencam) {Open Camera};
+\node[action=blue, below=of opencam] (capture) {Capture Text};
+\node[action=blue, below=of capture] (ocr) {OCR Processing};
+\node[action=blue, below=of ocr] (tokenize) {Word Tokenization};
+
+% ─── Words found? ──────────────────────────────────────────────────────────
+\node[dec, below=0.5cm of tokenize] (wordfound) {Words\\found?};
+\node[action=gray, left=1.8cm of wordfound] (notext) {Display\\``No text''};
+
+% ─── ITS phase ──────────────────────────────────────────────────────────────
+\node[action=purple, below=0.7cm of wordfound] (lookup) {Student Model\\Lookup $P(L_n)$};
+\node[dec, below=0.5cm of lookup] (mastered) {$P(L_n)$\\$<$ threshold?};
+\node[action=purple, below=0.7cm of mastered] (generate) {ITS Generate\\Explanation};
+
+% ─── AR phase ───────────────────────────────────────────────────────────────
+\node[action=teal, below=of generate] (aroverlay) {AR Display\\Overlay};
+\node[action=orange, right=1.8cm of aroverlay] (scanpts) {Award Scan\\Points (+5)};
+
+% ─── Tap word? ──────────────────────────────────────────────────────────────
+\node[dec, below=0.5cm of aroverlay] (tapword) {Student\\taps word?};
+\node[action=teal, below=0.7cm of tapword] (detail) {Show Detailed\\Explanation};
+
+% ─── Need help? ─────────────────────────────────────────────────────────────
+\node[dec, below=0.5cm of detail] (needhelp) {Need\\help?};
+\node[action=purple, below left=0.7cm and 0.5cm of needhelp] (chatbot) {Conversational\\Agent};
+\node[action=purple, below=0.7cm of needhelp] (its) {Intelligent\\Tutor};
+\node[action=gray, below right=0.7cm and 0.5cm of needhelp] (teacher) {Escalate to\\Teacher};
+
+% ─── Take quiz? ─────────────────────────────────────────────────────────────
+\node[forkjoin, below=2.8cm of needhelp] (join2) {};
+\node[dec, below=0.5cm of join2] (takequiz) {Take\\quiz?};
+\node[action=orange, below=0.7cm of takequiz] (genquiz) {Generate Quiz};
+\node[action=orange, below=of genquiz] (answer) {Answer Questions};
+\node[action=purple, below=of answer] (updmast) {Update Mastery};
+\node[action=orange, below=of updmast] (quizpts) {Award Quiz Points\\Check Badges};
+
+% ─── Continue? ──────────────────────────────────────────────────────────────
+\node[forkjoin, below=2.5cm of takequiz, xshift=3cm] (join3) {};
+\node[dec, below=0.5cm of join3] (contsession) {Continue\\session?};
+\node[action=gray, below=0.7cm of contsession] (sync) {Sync to Backend};
+\node[endc, below=0.4cm of sync] (endnode) {};
+
+% ─── Arrows ─────────────────────────────────────────────────────────────────
+\draw[arr] (start) -- (launch);
+\draw[arr] (launch) -- (streak);
+\draw[arr] (streak) -- (fork1);
+\draw[arr] (fork1.south) -| (dailygoal);
+\draw[arr] (fork1.south) -| (home);
+\draw[arr] (dailygoal) |- (join1);
+\draw[arr] (home) |- (join1);
+\draw[arr] (join1) -- (opencam);
+\draw[arr] (opencam) -- (capture);
+\draw[arr] (capture) -- (ocr);
+\draw[arr] (ocr) -- (tokenize);
+\draw[arr] (tokenize) -- (wordfound);
+
+% Words found decision
+\draw[arr] (wordfound) -- node[above, lbl] {No} (notext);
+\draw[arr] (notext) |- (capture);
+\draw[arr] (wordfound) -- node[right, lbl] {Yes} (lookup);
+
+\draw[arr] (lookup) -- (mastered);
+\draw[arr] (mastered) -- node[right, lbl] {Yes} (generate);
+\draw[arr] (mastered.east) -- ++(1.5,0) node[above, lbl] {No (mastered)} |- (tapword.east);
+
+\draw[arr] (generate) -- (aroverlay);
+\draw[arr] (aroverlay) -- (scanpts);
+\draw[arr] (aroverlay) -- (tapword);
+
+% Tap word decision
+\draw[arr] (tapword) -- node[right, lbl] {Yes} (detail);
+\draw[arr] (tapword.west) -- ++(-1.5,0) node[above, lbl] {No} |- (join2.west);
+
+\draw[arr] (detail) -- (needhelp);
+
+% Need help decision
+\draw[arr] (needhelp) -- node[left, lbl, pos=0.3] {Quick} (chatbot);
+\draw[arr] (needhelp) -- node[right, lbl, pos=0.3] {Deep} (its);
+\draw[arr] (needhelp) -- node[right, lbl, pos=0.3] {Complex} (teacher);
+\draw[arr] (chatbot) |- (join2);
+\draw[arr] (its) -- (join2);
+\draw[arr] (teacher) |- (join2);
+
+\draw[arr] (join2) -- (takequiz);
+
+% Quiz decision
+\draw[arr] (takequiz) -- node[right, lbl] {Yes} (genquiz);
+\draw[arr] (genquiz) -- (answer);
+\draw[arr] (answer) -- (updmast);
+\draw[arr] (updmast) -- (quizpts);
+\draw[arr] (quizpts) |- (join3);
+
+\draw[arr] (takequiz.east) -- ++(1.5,0) node[above, lbl] {No} |- (join3);
+
+\draw[arr] (join3) -- (contsession);
+
+% Continue decision
+\draw[arr] (contsession) -- node[right, lbl] {No} (sync);
+\draw[arr] (contsession.east) -- ++(1.5,0) node[above, lbl] {Yes} |- ([yshift=0.3cm]capture.east) -- (capture.east);
+\draw[arr] (sync) -- (endnode);
+
+\end{tikzpicture}

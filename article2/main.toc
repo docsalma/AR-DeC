@@ -1,0 +1,32 @@
+\contentsline {section}{\numberline {1}Introduction}{3}{section.1}%
+\contentsline {section}{\numberline {2}Theoretical Framework}{5}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Mobile Augmented Reality in Education: Foundations and Challenges}{5}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Vocabulary Acquisition and Reading Comprehension}{6}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Intelligent Tutoring Systems for Adaptive Learning}{7}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Gamification in Educational Contexts}{8}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}Pedagogical Scenario Modeling with UML}{10}{subsection.2.5}%
+\contentsline {section}{\numberline {3}Modeling the AR-DeC Pedagogical Scenario with UML: A Methodological Approach}{11}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Static View}{12}{subsection.3.1}%
+\contentsline {subsubsection}{\numberline {3.1.1}Class Diagram}{12}{subsubsection.3.1.1}%
+\contentsline {subsubsection}{\numberline {3.1.2}Use Case Diagram}{19}{subsubsection.3.1.2}%
+\contentsline {paragraph}{Student use cases.}{20}{section*.2}%
+\contentsline {paragraph}{Teacher use cases.}{20}{section*.3}%
+\contentsline {paragraph}{System use cases.}{20}{section*.4}%
+\contentsline {paragraph}{Relationships.}{20}{section*.5}%
+\contentsline {subsection}{\numberline {3.2}Dynamic View}{21}{subsection.3.2}%
+\contentsline {subsubsection}{\numberline {3.2.1}Activity Diagram}{21}{subsubsection.3.2.1}%
+\contentsline {paragraph}{Session start phase.}{21}{section*.6}%
+\contentsline {paragraph}{Scanning phase.}{21}{section*.7}%
+\contentsline {paragraph}{ITS phase.}{21}{section*.8}%
+\contentsline {paragraph}{AR display phase.}{23}{section*.9}%
+\contentsline {paragraph}{Help-seeking phase.}{23}{section*.10}%
+\contentsline {paragraph}{Quiz phase.}{23}{section*.11}%
+\contentsline {paragraph}{Gamification phase.}{23}{section*.12}%
+\contentsline {paragraph}{Session end.}{23}{section*.13}%
+\contentsline {subsubsection}{\numberline {3.2.2}Sequence Diagram}{24}{subsubsection.3.2.2}%
+\contentsline {paragraph}{Main learning session (\texttt {par} fragment).}{24}{section*.14}%
+\contentsline {paragraph}{Quiz (\texttt {opt} fragment).}{24}{section*.15}%
+\contentsline {paragraph}{Help-seeking (\texttt {opt} fragment with \texttt {alt} conditions).}{26}{section*.16}%
+\contentsline {subsubsection}{\numberline {3.2.3}Synthesis}{26}{subsubsection.3.2.3}%
+\contentsline {section}{\numberline {4}Discussion and Limitations}{26}{section.4}%
+\contentsline {section}{\numberline {5}Conclusion}{29}{section.5}%

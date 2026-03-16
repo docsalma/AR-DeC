@@ -1,0 +1,73 @@
+@startuml usecase-diagram
+!theme plain
+skinparam actorStyle awesome
+skinparam usecaseBorderColor #555555
+skinparam usecaseBackgroundColor #F5F5FF
+skinparam actorBorderColor #333333
+skinparam rectangleBorderColor #888888
+skinparam rectangleBackgroundColor #FFFFF5
+skinparam arrowColor #555555
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 11
+skinparam dpi 150
+
+actor "Student" as S
+actor "Teacher" as T
+
+rectangle "AR-DeC System" {
+  ' Student use cases
+  usecase "Scan Text\n(OCR)" as UC1
+  usecase "View Word\nExplanation" as UC2
+  usecase "View in AR" as UC3
+  usecase "Take Vocabulary\nQuiz" as UC4
+  usecase "View Progress\n& Badges" as UC5
+  usecase "Request\nHelp-Clarification" as UC6
+
+  ' Teacher use cases
+  usecase "Define\nVocabulary Lists" as UC7
+  usecase "Assign Learning\nActivities" as UC8
+  usecase "View Learner\nAnalytics" as UC9
+  usecase "Provide\nFeedback" as UC10
+  usecase "Manage Learning\nResources" as UC11
+
+  ' System use cases
+  usecase "Process OCR" as UC12
+  usecase "Adapt Content to\nBloom's Level" as UC13
+  usecase "Track Mastery\nvia BKT" as UC14
+  usecase "Award Points\n& Badges" as UC15
+
+  ' Extension use cases
+  usecase "Interact with\nConversational Agent" as UC16
+  usecase "Consult\nIntelligent Tutor" as UC17
+  usecase "Escalate to\nTeacher" as UC18
+}
+
+' Student associations
+S -- UC1
+S -- UC2
+S -- UC3
+S -- UC4
+S -- UC5
+S -- UC6
+
+' Teacher associations
+T -- UC7
+T -- UC8
+T -- UC9
+T -- UC10
+T -- UC11
+
+' Include relationships
+UC1 ..> UC12 : <<include>>
+UC2 ..> UC13 : <<include>>
+UC1 ..> UC14 : <<include>>
+UC4 ..> UC15 : <<include>>
+UC9 ..> UC14 : <<include>>
+
+' Extend relationships
+UC16 ..> UC6 : <<extend>>
+UC17 ..> UC6 : <<extend>>
+UC18 ..> UC6 : <<extend>>
+
+@enduml

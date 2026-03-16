@@ -1,0 +1,234 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% A UML-Driven Framework for Mobile AR-Enhanced Vocabulary
+%% Acquisition Integrating OCR, Intelligent Tutoring, and Gamification
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[12pt]{article}
+
+%%% Geometry and spacing
+\usepackage[a4paper, margin=2.5cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+%%% Fonts and encoding
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+
+%%% Mathematics
+\usepackage{amsmath,amssymb}
+
+%%% Graphics and TikZ
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{
+  shapes.geometric,
+  arrows.meta,
+  positioning,
+  fit,
+  backgrounds,
+  calc,
+  decorations.pathreplacing,
+  shapes.multipart
+}
+
+%%% Tables
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{tabularx}
+
+%%% Landscape pages
+\usepackage{pdflscape}
+
+%%% Colors
+\usepackage[dvipsnames]{xcolor}
+
+%%% Lists
+\usepackage[inline]{enumitem}
+
+%%% Hyperlinks and cross-references
+\usepackage[colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue]{hyperref}
+\usepackage[capitalise,noabbrev]{cleveref}
+
+%%% Bibliography
+\usepackage[numbers,sort&compress]{natbib}
+\bibliographystyle{unsrtnat}
+
+%%% Miscellaneous
+\usepackage{graphicx}
+\usepackage{float}
+
+%%% UML styling via plain TikZ
+\definecolor{umlblue}{RGB}{66,133,244}
+\definecolor{umlgreen}{RGB}{52,168,83}
+\definecolor{umlyellow}{RGB}{251,188,4}
+\definecolor{umlred}{RGB}{234,67,53}
+\definecolor{umlgray}{RGB}{245,245,245}
+\definecolor{classheader}{RGB}{41,98,255}
+\definecolor{actorcolor}{RGB}{66,133,244}
+
+% TikZ styles for UML class diagrams
+\tikzset{
+  umlclass/.style={
+    rectangle split,
+    rectangle split parts=3,
+    draw=black,
+    fill=umlgray,
+    minimum width=3.8cm,
+    font=\small,
+    every text node part/.style={align=center},
+    rectangle split part fill={classheader!20, white, white}
+  },
+  umlactor/.style={
+    rectangle,
+    draw=actorcolor,
+    fill=actorcolor!10,
+    rounded corners=3pt,
+    minimum width=2cm,
+    minimum height=0.8cm,
+    font=\small\bfseries
+  },
+  umlarrow/.style={
+    -Stealth,
+    thick
+  },
+  umlassoc/.style={
+    thick
+  },
+  umlinherit/.style={
+    -{Triangle[open,length=8pt,width=6pt]},
+    thick
+  },
+  umlcompose/.style={
+    -{Diamond[length=8pt,width=6pt,fill=black]},
+    thick
+  },
+  umlaggregate/.style={
+    -{Diamond[length=8pt,width=6pt,open]},
+    thick
+  },
+}
+
+% TikZ styles for use case diagrams
+\tikzset{
+  usecase/.style={
+    ellipse,
+    draw=black,
+    fill=umlgray,
+    minimum width=3cm,
+    minimum height=1cm,
+    font=\small,
+    align=center
+  },
+  actor/.style={
+    rectangle,
+    draw=none,
+    font=\small,
+    align=center
+  },
+  systembox/.style={
+    draw=black,
+    dashed,
+    rounded corners=5pt,
+    inner sep=10pt
+  }
+}
+
+% TikZ styles for activity diagrams
+\tikzset{
+  activitynode/.style={
+    rectangle,
+    rounded corners=5pt,
+    draw=black,
+    fill=umlgray,
+    minimum width=2.5cm,
+    minimum height=0.7cm,
+    font=\small,
+    align=center
+  },
+  decision/.style={
+    diamond,
+    draw=black,
+    fill=umlyellow!30,
+    minimum width=1.5cm,
+    minimum height=1.5cm,
+    font=\small,
+    align=center,
+    aspect=2
+  },
+  startnode/.style={
+    circle,
+    fill=black,
+    minimum size=8pt,
+    inner sep=0pt
+  },
+  endnode/.style={
+    circle,
+    draw=black,
+    thick,
+    minimum size=10pt,
+    inner sep=0pt,
+    path picture={
+      \fill (path picture bounding box.center) circle (4pt);
+    }
+  },
+  forkbar/.style={
+    rectangle,
+    fill=black,
+    minimum width=3cm,
+    minimum height=3pt,
+    inner sep=0pt
+  }
+}
+
+%%% Title block
+\title{
+  \vspace{-1cm}
+  \textbf{A UML-Driven Framework for Mobile AR-Enhanced Vocabulary Acquisition Integrating OCR, Intelligent Tutoring, and Gamification}
+}
+
+\author{
+  First Author\textsuperscript{1,*} \and
+  Second Author\textsuperscript{2} \and
+  Third Author\textsuperscript{1} \\[6pt]
+  \textsuperscript{1}Department of Computer Science, University Name, City, Country \\
+  \textsuperscript{2}Department of Education, University Name, City, Country \\[4pt]
+  \textsuperscript{*}Corresponding author: \texttt{first.author@university.edu}
+}
+
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+The integration of Augmented Reality (AR) into mobile learning environments holds significant promise for enhancing vocabulary acquisition, yet existing systems typically address only isolated aspects of the learning process. This paper presents a comprehensive UML-driven framework for AR-DeC (Augmented Reality Didactic Companion), a mobile educational application that uniquely integrates four synergistic components: on-device Optical Character Recognition (OCR), an Intelligent Tutoring System (ITS) grounded in Bayesian Knowledge Tracing and Bloom's taxonomy, real-time AR overlays for contextual vocabulary display, and a gamification engine incorporating points, badges, streaks, and quizzes. Employing the Unified Modeling Language (UML), we formalize the pedagogical scenario through four complementary diagrams: a class diagram specifying 15 classes organized across five functional groups, a use case diagram delineating the interactions of three actors (Student, Teacher, System), an activity diagram capturing the dynamic workflow of a learning session, and a sequence diagram illustrating the chronological message flow during a scan-learn-quiz cycle. This dual-perspective modeling approach---combining static structural views with dynamic behavioral views---bridges the gap between pedagogical design intent and technical implementation. The resulting framework provides a reusable architectural blueprint for researchers and developers seeking to design mobile AR-enhanced educational systems that are simultaneously adaptive, engaging, and pedagogically grounded.
+
+\medskip
+\noindent\textbf{Keywords:} Augmented Reality, Intelligent Tutoring System, UML Modeling, Gamification, Mobile Learning, OCR, Vocabulary Acquisition, Bayesian Knowledge Tracing
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%% Section 1: Introduction
+\input{sections/introduction}
+
+%% Section 2: Theoretical Framework
+\input{sections/theoretical}
+
+%% Section 3: UML Modeling
+\input{sections/modeling}
+
+%% Section 4: Discussion and Limitations
+\input{sections/discussion}
+
+%% Section 5: Conclusion
+\input{sections/conclusion}
+
+%% Bibliography
+\bibliography{references}
+
+\end{document}

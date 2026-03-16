@@ -1,0 +1,316 @@
+% ==============================================================================
+% UML Class Diagram — AR-DeC (15 classes, 5 groups)
+% Requires: \usetikzlibrary{shapes.multipart} in main.tex
+% ==============================================================================
+\begin{tikzpicture}[
+    node distance=0.8cm and 0.6cm,
+    every node/.style={font=\tiny},
+    cls/.style={
+        rectangle split,
+        rectangle split parts=3,
+        draw=black,
+        minimum width=2.8cm,
+        font=\tiny,
+        align=left,
+        rectangle split part align={center, left, left},
+        inner sep=3pt
+    },
+    bluecls/.style={cls, rectangle split part fill={blue!25, blue!5, blue!5}},
+    greencls/.style={cls, rectangle split part fill={green!25, green!5, green!5}},
+    orangecls/.style={cls, rectangle split part fill={orange!25, orange!5, orange!5}},
+    purplecls/.style={cls, rectangle split part fill={violet!25, violet!5, violet!5}},
+    redcls/.style={cls, rectangle split part fill={red!20, red!5, red!5}},
+    assoc/.style={thick},
+    comp/.style={thick, -{Diamond[length=5pt, width=4pt, fill=black]}},
+    agg/.style={thick, -{Diamond[length=5pt, width=4pt, open]}},
+    lbl/.style={font=\tiny\itshape, fill=white, inner sep=1pt},
+    card/.style={font=\tiny, fill=white, inner sep=1pt}
+]
+
+% ═══════════════════════════════════════════════════════════════════════════
+% ROW 1: Core Actors (blue)
+% ═══════════════════════════════════════════════════════════════════════════
+\node[bluecls] (Student) at (0, 0) {
+    \textbf{Student}
+    \nodepart{two}
+    +currentGroups: List\\
+    +profile: StudentProfile
+    \nodepart{three}
+    +scanText()\\
+    +selectWord()\\
+    +viewExplanation()\\
+    +takeQuiz()\\
+    +viewProgress()
+};
+
+\node[bluecls, right=3cm of Student] (Teacher) {
+    \textbf{Teacher}
+    \nodepart{two}
+    +managedCourses: List\\
+    +createdResources: List
+    \nodepart{three}
+    +defineVocabularyList()\\
+    +assignActivity()\\
+    +viewAnalytics()\\
+    +provideFeedback()
+};
+
+% ═══════════════════════════════════════════════════════════════════════════
+% ROW 2: Learning Content (green)
+% ═══════════════════════════════════════════════════════════════════════════
+\node[greencls, below=1.5cm of Student, xshift=-3.5cm] (ScannedWord) {
+    \textbf{ScannedWord}
+    \nodepart{two}
+    +id: String\\
+    +text: String\\
+    +context: String\\
+    +boundingBox: Rect
+    \nodepart{three}
+    +getContext()\\
+    +getPosition()
+};
+
+\node[greencls, right=0.4cm of ScannedWord] (Explanation) {
+    \textbf{Explanation}
+    \nodepart{two}
+    +definition: String\\
+    +examples: List\\
+    +bloomsLevel: Enum\\
+    +source: String
+    \nodepart{three}
+    +getAdaptedContent()\\
+    +addExample()
+};
+
+\node[greencls, right=0.4cm of Explanation] (DomainModel) {
+    \textbf{DomainModel}
+    \nodepart{two}
+    +vocabularyDB: Map\\
+    +conceptRelations: Map\\
+    +difficultyLevels: Map
+    \nodepart{three}
+    +lookupWord()\\
+    +getRelated()\\
+    +getDifficulty()
+};
+
+\node[greencls, right=0.4cm of DomainModel] (LearningResource) {
+    \textbf{LearningResource}
+    \nodepart{two}
+    +title: String\\
+    +resourceType: String\\
+    +content: Object\\
+    +difficulty: int
+    \nodepart{three}
+    +getContent()\\
+    +getMetadata()
+};
+
+% ═══════════════════════════════════════════════════════════════════════════
+% ROW 3: Student Modeling (orange)
+% ═══════════════════════════════════════════════════════════════════════════
+\node[orangecls, below=1.5cm of ScannedWord, xshift=1.5cm] (StudentProfile) {
+    \textbf{StudentProfile}
+    \nodepart{two}
+    +learningStyle: String\\
+    +competencies: List\\
+    +points: int\\
+    +level: StudentLevel\\
+    +streakDays: int\\
+    +badges: List$\langle$Badge$\rangle$
+    \nodepart{three}
+    +updateCompetencies()\\
+    +trackProgress()\\
+    +getRecommendations()
+};
+
+\node[orangecls, right=1.5cm of StudentProfile] (StudentModel) {
+    \textbf{StudentModel}
+    \nodepart{two}
+    +masteryMap: Map$\langle$word,$P(L_n)\rangle$\\
+    +priorKnowledge: float\\
+    +transitionProb: float\\
+    +slipProb: float\\
+    +guessProb: float
+    \nodepart{three}
+    +estimateMastery()\\
+    +updateAfterInteraction()\\
+    +getWeakWords()\\
+    +predictPerformance()
+};
+
+% ═══════════════════════════════════════════════════════════════════════════
+% ROW 4: AI & AR (purple)
+% ═══════════════════════════════════════════════════════════════════════════
+\node[purplecls, below=1.5cm of StudentProfile, xshift=-2cm] (CameraModule) {
+    \textbf{CameraModule}
+    \nodepart{two}
+    +cameraFeed: Stream\\
+    +ocrEngine: OCR\\
+    +detectedRegions: List
+    \nodepart{three}
+    +captureFrame()\\
+    +extractText()\\
+    +getWordPositions()
+};
+
+\node[purplecls, right=0.3cm of CameraModule] (TutoringEngine) {
+    \textbf{TutoringEngine}
+    \nodepart{two}
+    +domainModel: DomainModel\\
+    +studentModel: StudentModel\\
+    +bloomsMapping: Map
+    \nodepart{three}
+    +getExplanation()\\
+    +selectBloomsLevel()\\
+    +adaptContent()\\
+    +escalateToHuman()
+};
+
+\node[purplecls, right=0.3cm of TutoringEngine] (ARRenderer) {
+    \textbf{ARRenderer}
+    \nodepart{two}
+    +currentOverlays: List\\
+    +renderingMode: Enum\\
+    +cameraFeed: Stream
+    \nodepart{three}
+    +displayOverlay()\\
+    +showDefinitionCard()\\
+    +show3DModel()
+};
+
+\node[purplecls, right=0.3cm of ARRenderer] (ConvAgent) {
+    \textbf{ConversationalAgent}
+    \nodepart{two}
+    +knowledgeSources: List\\
+    +history: List
+    \nodepart{three}
+    +processQuery()\\
+    +retrieveInfo()\\
+    +maintainContext()
+};
+
+% ═══════════════════════════════════════════════════════════════════════════
+% ROW 5: Gamification (red)
+% ═══════════════════════════════════════════════════════════════════════════
+\node[redcls, below=1.5cm of TutoringEngine, xshift=-1cm] (GamEngine) {
+    \textbf{GamificationEngine}
+    \nodepart{two}
+    +pointsSystem: Config\\
+    +badgeDefs: List\\
+    +streakTracker: Tracker\\
+    +comboMultiplier: float
+    \nodepart{three}
+    +onWordScanned()\\
+    +onQuizAnswer()\\
+    +checkBadges()\\
+    +updateStreak()
+};
+
+\node[redcls, right=0.5cm of GamEngine] (Badge) {
+    \textbf{Badge}
+    \nodepart{two}
+    +id: String\\
+    +name: String\\
+    +category: Enum\\
+    +condition: String\\
+    +earnedAt: Date
+    \nodepart{three}
+    +checkCondition()\\
+    +award()
+};
+
+\node[redcls, right=0.5cm of Badge] (Quiz) {
+    \textbf{Quiz}
+    \nodepart{two}
+    +questions: List\\
+    +timeLimit: int\\
+    +comboMultiplier: float\\
+    +score: int
+    \nodepart{three}
+    +generateFromVocab()\\
+    +submitAnswer()\\
+    +calculateScore()
+};
+
+% ═══════════════════════════════════════════════════════════════════════════
+% RELATIONSHIPS
+% ═══════════════════════════════════════════════════════════════════════════
+
+% Student -- Has --> StudentProfile
+\draw[comp] (Student.south) -- ++(0,-0.3) -| (StudentProfile.north)
+    node[card, pos=0.0] {1} node[card, pos=1.0, above] {1};
+
+% Student -- Uses --> CameraModule
+\draw[assoc] (Student.south west) -- ++(0,-0.2) -| (CameraModule.north)
+    node[lbl, pos=0.5] {+Uses};
+
+% Student -- Takes --> Quiz
+\draw[assoc] (Student.south) -- ++(0,-0.5) -| ([xshift=0.3cm]Quiz.north)
+    node[lbl, pos=0.5] {+Takes} node[card, pos=0.0] {1} node[card, pos=1.0, above] {*};
+
+% Teacher -- Manages --> LearningResource
+\draw[assoc] (Teacher.south) -- (LearningResource.north)
+    node[lbl, pos=0.5] {+Manages} node[card, pos=0.1, right] {1} node[card, pos=0.9, right] {*};
+
+% Teacher -- Defines --> DomainModel
+\draw[assoc] (Teacher.south west) -- ++(0,-0.3) -| (DomainModel.north)
+    node[lbl, pos=0.5] {+Defines};
+
+% CameraModule -- Produces --> ScannedWord
+\draw[assoc] (CameraModule.north) -- ++(0,0.3) -| (ScannedWord.south)
+    node[lbl, pos=0.5] {+Produces} node[card, pos=0.0, left] {1} node[card, pos=1.0, left] {*};
+
+% TutoringEngine -- Generates --> Explanation
+\draw[assoc] (TutoringEngine.north) -- (Explanation.south)
+    node[lbl, pos=0.5, right] {+Generates};
+
+% TutoringEngine -- Consults --> StudentModel
+\draw[assoc] (TutoringEngine.north east) -- ++(0,0.3) -| (StudentModel.south)
+    node[lbl, pos=0.3] {+Consults};
+
+% TutoringEngine -- Consults --> DomainModel
+\draw[assoc] (TutoringEngine.north) -- ++(0,1.0) -| (DomainModel.south west)
+    node[lbl, pos=0.2] {+Consults};
+
+% ARRenderer -- Displays --> Explanation
+\draw[assoc] (ARRenderer.north) -- ++(0,0.4) -| ([xshift=0.5cm]Explanation.south east)
+    node[lbl, pos=0.3] {+Displays};
+
+% StudentModel -- Tracks --> ScannedWord
+\draw[assoc] (StudentModel.north west) -- ++(0,0.3) -| ([xshift=0.3cm]ScannedWord.south east)
+    node[lbl, pos=0.5] {+Tracks};
+
+% StudentProfile -- Contains --> Badge
+\draw[agg] (StudentProfile.south) -- ++(0,-0.3) -| (Badge.north)
+    node[lbl, pos=0.5] {+Contains} node[card, pos=1.0, above] {*};
+
+% GamificationEngine -- Awards --> Badge
+\draw[assoc] (GamEngine.east) -- (Badge.west)
+    node[lbl, pos=0.5, above] {+Awards};
+
+% GamificationEngine -- Manages --> Quiz
+\draw[assoc] (GamEngine.south east) -- ++(0.3,0) |- (Quiz.west)
+    node[lbl, pos=0.5, above] {+Manages};
+
+% Quiz -- Tests --> ScannedWord
+\draw[assoc] (Quiz.north) -- ++(0,0.5) -| ([xshift=-0.3cm]ScannedWord.south west)
+    node[lbl, pos=0.3] {+Tests};
+
+% ═══════════════════════════════════════════════════════════════════════════
+% GROUP LABELS (background)
+% ═══════════════════════════════════════════════════════════════════════════
+\begin{scope}[on background layer]
+    \node[fit=(Student)(Teacher), fill=blue!4, draw=blue!20, rounded corners=6pt, inner sep=8pt,
+          label={[font=\tiny\scshape\bfseries, color=blue!50!black]above:Core Actors}] {};
+    \node[fit=(ScannedWord)(LearningResource), fill=green!4, draw=green!20, rounded corners=6pt, inner sep=6pt,
+          label={[font=\tiny\scshape\bfseries, color=green!50!black]above left:Learning Content}] {};
+    \node[fit=(StudentProfile)(StudentModel), fill=orange!4, draw=orange!20, rounded corners=6pt, inner sep=6pt,
+          label={[font=\tiny\scshape\bfseries, color=orange!50!black]above left:Student Modeling}] {};
+    \node[fit=(CameraModule)(ConvAgent), fill=violet!4, draw=violet!20, rounded corners=6pt, inner sep=6pt,
+          label={[font=\tiny\scshape\bfseries, color=violet!50!black]above left:AI \& AR}] {};
+    \node[fit=(GamEngine)(Quiz), fill=red!4, draw=red!20, rounded corners=6pt, inner sep=6pt,
+          label={[font=\tiny\scshape\bfseries, color=red!50!black]above left:Gamification}] {};
+\end{scope}
+
+\end{tikzpicture}

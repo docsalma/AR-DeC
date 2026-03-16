@@ -1,0 +1,154 @@
+% ==============================================================================
+% Section 5: Technical Implementation
+% ==============================================================================
+
+\section{Technical Implementation}
+\label{sec:implementation}
+
+This section details the implementation of AR-DeC's four technological pillars: the OCR pipeline, the ITS decision engine, the AR rendering strategy, and the gamification mechanics.
+
+\subsection{OCR Pipeline}
+\label{subsec:ocr_pipeline}
+
+The OCR pipeline is built on Google ML Kit's text recognition API, accessed through the \texttt{react-native-mlkit-ocr} library. The pipeline processes camera frames through the following stages:
+
+\begin{enumerate}
+    \item \textbf{Frame Capture}: The device camera captures frames at native resolution. A throttling mechanism limits OCR processing to one frame per 500ms to balance responsiveness with battery consumption.
+
+    \item \textbf{Preprocessing}: Captured frames undergo contrast normalisation and adaptive thresholding to improve recognition accuracy under variable lighting conditions. These operations execute on the GPU via the platform's native image processing APIs.
+
+    \item \textbf{Text Recognition}: ML Kit's on-device text recogniser processes the frame and returns a hierarchical structure of text blocks, lines, and elements (words), each annotated with bounding-box coordinates, confidence scores, and the recognised string.
+
+    \item \textbf{Word Tokenisation}: Recognised text elements are tokenised, normalised to lowercase, and filtered to remove stopwords, punctuation, and words shorter than three characters. Each valid token is tagged with its spatial coordinates for subsequent AR overlay positioning.
+
+    \item \textbf{Word Classification}: Tokens are classified into three categories based on student model lookup: \emph{known} (mastery $\geq 0.85$), \emph{learning} ($0.3 \leq$ mastery $< 0.85$), and \emph{unknown} (mastery $< 0.3$ or first encounter). This classification determines the visual treatment in the AR overlay and the content level delivered by the ITS engine.
+\end{enumerate}
+
+The entire OCR pipeline executes on-device without network dependency, achieving an average processing time of approximately 200ms per frame on mid-range smartphones (tested on devices with Snapdragon 7-series and Apple A14 processors). Recognition accuracy exceeds 95\% for standard printed text at a distance of 15--30cm.
+
+\subsection{ITS Decision Engine}
+\label{subsec:its_engine}
+
+The ITS engine implements a three-layer adaptive content selection mechanism comprising the student model, the tutoring strategy, and the content generator.
+
+\subsubsection{Student Model: Bayesian Knowledge Tracing}
+
+The student model employs Bayesian Knowledge Tracing (BKT) \cite{corbett1994} to maintain per-word mastery estimates. For each vocabulary item $w$, the model maintains a probability of mastery $P(L_n)$ after $n$ interactions, governed by four parameters:
+
+\begin{itemize}
+    \item $P(L_0)$: Prior probability of initial knowledge (default: 0.1 for new words)
+    \item $P(T)$: Probability of learning upon each opportunity (default: 0.3)
+    \item $P(G)$: Probability of a correct response despite non-mastery (guess; default: 0.2)
+    \item $P(S)$: Probability of an incorrect response despite mastery (slip; default: 0.1)
+\end{itemize}
+
+Upon observing a correct response at interaction $n$, the posterior mastery estimate is updated as:
+
+\begin{equation}
+P(L_n | \text{correct}) = \frac{P(L_{n-1})(1 - P(S))}{P(L_{n-1})(1 - P(S)) + (1 - P(L_{n-1}))P(G)}
+\label{eq:bkt_correct}
+\end{equation}
+
+For an incorrect response:
+
+\begin{equation}
+P(L_n | \text{incorrect}) = \frac{P(L_{n-1}) \cdot P(S)}{P(L_{n-1}) \cdot P(S) + (1 - P(L_{n-1}))(1 - P(G))}
+\label{eq:bkt_incorrect}
+\end{equation}
+
+The transition to the next interaction incorporates the learning rate:
+
+\begin{equation}
+P(L_{n+1}) = P(L_n | \text{observation}) + (1 - P(L_n | \text{observation})) \cdot P(T)
+\label{eq:bkt_transition}
+\end{equation}
+
+\subsubsection{Tutoring Strategy: Bloom's Taxonomy Mapping}
+
+The tutoring model maps the current mastery estimate to a Bloom's taxonomy level, as described in \Cref{subsec:blooms}, and selects an appropriate content template. The selection follows \Cref{alg:content_selection}.
+
+\begin{algorithm}[htbp]
+\caption{Adaptive content selection based on BKT mastery estimate}
+\label{alg:content_selection}
+\KwIn{Word $w$, mastery probability $P(L_n)$, context sentence $C$}
+\KwOut{Content package $(level, explanation, assessment)$}
+\If{$P(L_n) < 0.3$}{
+    $level \leftarrow$ \textsc{Remember}\;
+    $explanation \leftarrow$ \texttt{generateDefinition}($w$)\;
+    $assessment \leftarrow$ \texttt{None}\;
+}
+\ElseIf{$P(L_n) < 0.6$}{
+    $level \leftarrow$ \textsc{Understand}\;
+    $explanation \leftarrow$ \texttt{generateContextualExplanation}($w$, $C$)\;
+    $assessment \leftarrow$ \texttt{None}\;
+}
+\ElseIf{$P(L_n) < 0.85$}{
+    $level \leftarrow$ \textsc{Apply}\;
+    $explanation \leftarrow$ \texttt{generateBriefReminder}($w$)\;
+    $assessment \leftarrow$ \texttt{generateMCQ}($w$, $C$)\;
+}
+\Else{
+    $level \leftarrow$ \textsc{Analyse}\;
+    $explanation \leftarrow$ \texttt{None}\;
+    $assessment \leftarrow$ \texttt{generateAnalysisPrompt}($w$)\;
+}
+\Return{$(level, explanation, assessment)$}
+\end{algorithm}
+
+\subsubsection{Content Generator}
+
+The content generator produces explanations and assessments using the Claude API with structured prompts that specify the target Bloom's level, the word's context sentence, and the learner's language level. Responses are formatted as structured JSON objects containing the explanation text, example sentences, related words, and (when applicable) multiple-choice quiz items. To minimise latency, common words are pre-cached in an on-device vocabulary database, with API calls reserved for domain-specific or rare terms.
+
+\subsection{AR Rendering Strategy}
+\label{subsec:ar_rendering}
+
+The AR rendering layer uses ViroReact to overlay ITS-generated content onto the live camera feed. Three rendering modes are supported:
+
+\begin{enumerate}
+    \item \textbf{Text Annotation Mode}: Word definitions and brief explanations are rendered as semi-transparent text cards anchored to the bounding box of the scanned word. Cards use colour coding to indicate mastery level: red for unknown, yellow for learning, and green for mastered words.
+
+    \item \textbf{Information Card Mode}: Tapping an annotated word expands it into a detailed information card displayed as a floating AR panel. The card contains the full explanation, example sentences, related words, and (if available) an illustrative image. Cards are positioned in 3D space above the text surface using ARCore/ARKit plane detection.
+
+    \item \textbf{3D Model Mode}: For concrete nouns and concepts with available 3D assets, the system renders an interactive 3D model adjacent to the word. Users can rotate and scale the model using gesture controls, providing a tangible visual referent for the vocabulary item.
+\end{enumerate}
+
+The rendering mode is selected by the ITS engine's interface model based on the word category, Bloom's level, and available assets. The system prioritises text annotations for Remember-level content, information cards for Understand-level content, and interactive elements (3D models or quiz overlays) for Apply and Analyse levels.
+
+\subsection{Gamification Mechanics}
+\label{subsec:gamification_mechanics}
+
+The gamification engine implements a multi-layered reward system designed to sustain engagement across sessions while reinforcing productive learning behaviours.
+
+\subsubsection{Points System}
+
+Points are awarded for specific learning actions:
+\begin{itemize}
+    \item \textbf{Scan}: +5 points for each new text scan
+    \item \textbf{Read}: +3 points for reading a word explanation
+    \item \textbf{Quiz Correct}: +10 points for a correct quiz answer (with combo multiplier: $\times 1.5$ for 3 consecutive, $\times 2$ for 5 consecutive)
+    \item \textbf{Daily Streak}: +20 bonus points for maintaining a consecutive daily login streak
+\end{itemize}
+
+\subsubsection{Level Progression}
+
+Accumulated points determine the learner's level:
+\begin{itemize}
+    \item \textbf{Beginner}: 0--100 points
+    \item \textbf{Explorer}: 101--500 points
+    \item \textbf{Scholar}: 501--2000 points
+    \item \textbf{Master}: 2001+ points
+\end{itemize}
+
+\subsubsection{Badge System}
+
+Badges recognise specific achievements across four categories:
+\begin{itemize}
+    \item \textbf{Explorer Badges}: Awarded for scanning milestones (10, 50, 100, 500 scans)
+    \item \textbf{Scholar Badges}: Awarded for quiz mastery (10, 50, 100 correct answers)
+    \item \textbf{Streak Badges}: Awarded for consecutive daily usage (3, 7, 14, 30 days)
+    \item \textbf{Subject Badges}: Awarded for domain-specific vocabulary mastery (e.g., mastering 20 biology terms)
+\end{itemize}
+
+\subsubsection{Quiz System}
+
+The quiz module generates multiple-choice questions (MCQs) from the learner's vocabulary history. Quizzes are triggered when a learner has accumulated sufficient words at the Apply level of Bloom's taxonomy. Each quiz presents four answer options with a 15-second timer per question. A combo multiplier rewards consecutive correct answers, encouraging focused engagement. Quiz difficulty is calibrated by the BKT model, selecting words whose mastery probability falls within the optimal learning zone ($0.4 \leq P(L_n) \leq 0.8$).
