@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   FlatList,
   Animated,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -19,41 +20,46 @@ import { onWordScanned } from '../services/gamificationService';
 import type { ScannedWord } from '../models/types';
 import { colors, spacing, radii, shadows } from '../theme';
 
-type ScannerScreenProps = {
+type Props = {
   navigation: NativeStackNavigationProp<any>;
 };
 
-export default function ScannerScreen({ navigation }: ScannerScreenProps) {
+export default function ScannerScreen({ navigation }: Props) {
   const isFocused = useIsFocused();
   const [permission, requestPermission] = useCameraPermissions();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [scannedThisSession, setScannedThisSession] = useState<ScannedWord[]>([]);
-  const [cameraReady, setCameraReady] = useState(false);
-  const [cameraError, setCameraError] = useState<string | null>(null);
-  const cameraRef = useRef<CameraView>(null);
-  // Force-remount key: fixes Chrome/Safari bug where camera shows black after permission grant
-  const [cameraKey, setCameraKey] = useState(0);
-
+  const [processing, setProcessing] = useState(false);
+  const [words, setWords] = useState<ScannedWord[]>([]);
+  const [ready, setReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [mountKey, setMountKey] = useState(1);
+  const cam = useRef<CameraView>(null);
   const addWord = useScanStore((s) => s.addWord);
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const pulse = useRef(new Animated.Value(1)).current;
 
-  const handleCapture = useCallback(async () => {
-    if (!cameraRef.current || isProcessing || !cameraReady) return;
+  // When permission changes, bump the mount key to force fresh camera
+  useEffect(() => {
+    if (permission?.granted) {
+      setMountKey((k) => k + 1);
+    }
+  }, [permission?.granted]);
+
+  const capture = useCallback(async () => {
+    if (!cam.current || processing || !ready) return;
 
     Animated.sequence([
-      Animated.timing(pulseAnim, { toValue: 0.9, duration: 100, useNativeDriver: true }),
-      Animated.spring(pulseAnim, { toValue: 1, friction: 4, useNativeDriver: true }),
+      Animated.timing(pulse, { toValue: 0.9, duration: 100, useNativeDriver: true }),
+      Animated.spring(pulse, { toValue: 1, friction: 4, useNativeDriver: true }),
     ]).start();
 
-    setIsProcessing(true);
+    setProcessing(true);
     try {
-      const photo = await cameraRef.current.takePictureAsync({ quality: 0.8 });
+      const photo = await cam.current.takePictureAsync({ quality: 0.8 });
       if (!photo) return;
 
       const blocks = await scanImage(photo.uri);
-      const words = extractWords(blocks);
+      const extracted = extractWords(blocks);
 
-      const newWords: ScannedWord[] = words.map((w, i) => ({
+      const newWords: ScannedWord[] = extracted.map((w, i) => ({
         id: `${Date.now()}-${i}`,
         text: w.text,
         context: w.context,
@@ -62,29 +68,27 @@ export default function ScannerScreen({ navigation }: ScannerScreenProps) {
         explanations: [],
       }));
 
-      for (const word of newWords) {
-        addWord(word);
-        onWordScanned(word.text);
+      for (const w of newWords) {
+        addWord(w);
+        onWordScanned(w.text);
       }
-
-      setScannedThisSession((prev) => [...newWords, ...prev]);
+      setWords((prev) => [...newWords, ...prev]);
 
       if (newWords.length === 0) {
         Alert.alert('No text detected', 'Try pointing the camera at printed text.');
       }
-    } catch (error) {
-      if (error instanceof OcrError) {
-        const title = error.code === 'INVALID_URI' ? 'Invalid Image' : 'OCR Engine Error';
-        Alert.alert(title, error.message);
+    } catch (err) {
+      if (err instanceof OcrError) {
+        Alert.alert(err.code === 'INVALID_URI' ? 'Invalid Image' : 'OCR Error', err.message);
       } else {
-        Alert.alert('Scan Error', 'Failed to process image. Please try again.');
+        Alert.alert('Scan Error', 'Failed to process image.');
       }
     } finally {
-      setIsProcessing(false);
+      setProcessing(false);
     }
-  }, [isProcessing, cameraReady, addWord]);
+  }, [processing, ready, addWord]);
 
-  const handleWordPress = useCallback(
+  const tapWord = useCallback(
     (word: ScannedWord) => {
       useScanStore.getState().setCurrentWord(word);
       navigation.navigate('Result');
@@ -92,121 +96,110 @@ export default function ScannerScreen({ navigation }: ScannerScreenProps) {
     [navigation],
   );
 
+  // Loading permission
   if (!permission) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={s.center}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Starting camera…</Text>
       </View>
     );
   }
 
+  // Permission not granted
   if (!permission.granted) {
     return (
-      <View style={styles.permissionContainer}>
-        <View style={styles.permissionCard}>
-          <View style={styles.permissionIconBg}>
-            <MaterialCommunityIcons name="camera" size={36} color={colors.primary} />
-          </View>
-          <Text style={styles.permissionTitle}>Camera Access</Text>
-          <Text style={styles.permissionText}>
-            AR-DeC needs your camera to scan text from textbooks and create AR overlays.
+      <View style={s.center}>
+        <View style={s.card}>
+          <MaterialCommunityIcons name="camera" size={48} color={colors.primary} />
+          <Text style={s.cardTitle}>Camera Access</Text>
+          <Text style={s.cardText}>
+            AR-DeC needs camera access to scan text from textbooks.
           </Text>
-          <TouchableOpacity
-            style={styles.permissionButton}
-            onPress={async () => {
-              await requestPermission();
-              // Force remount camera after permission grant (Chrome/Safari fix)
-              setCameraKey((k) => k + 1);
-            }}
-          >
-            <Text style={styles.permissionButtonText}>Enable Camera</Text>
+          <TouchableOpacity style={s.cardBtn} onPress={requestPermission}>
+            <Text style={s.cardBtnText}>Enable Camera</Text>
           </TouchableOpacity>
-          <Text style={styles.permissionNote}>
-            Your camera feed stays on-device. We never store images.
-          </Text>
         </View>
       </View>
     );
   }
 
-  const captureDisabled = !cameraReady || isProcessing;
-
   return (
-    <View style={styles.container}>
+    <View style={s.root}>
+      {/* Back camera only — no facing state, no flip */}
       {isFocused && (
         <CameraView
-          key={`cam-${cameraKey}`}
-          ref={cameraRef}
+          key={`back-cam-${mountKey}`}
+          ref={cam}
           style={StyleSheet.absoluteFillObject}
           facing="back"
-          onCameraReady={() => setCameraReady(true)}
-          onMountError={(e) => setCameraError(e.message)}
+          onCameraReady={() => setReady(true)}
+          onMountError={(e) => setError(e.message)}
         />
       )}
 
-      <View style={styles.overlay} pointerEvents="box-none">
-        <View style={styles.topBar}>
-          <View style={styles.hintPill}>
-            <Text style={styles.hintText}>
-              {isProcessing ? 'Analyzing text...' : 'Align text within the frame'}
+      {/* Scan frame */}
+      <View style={s.overlay} pointerEvents="box-none">
+        <View style={s.hintRow}>
+          <View style={s.pill}>
+            <Text style={s.pillText}>
+              {processing ? 'Analyzing...' : 'Point at text'}
             </Text>
           </View>
         </View>
-
-        <View style={styles.scanFrame}>
-          <View style={[styles.corner, styles.tl]} />
-          <View style={[styles.corner, styles.tr]} />
-          <View style={[styles.corner, styles.bl]} />
-          <View style={[styles.corner, styles.br]} />
+        <View style={s.frame}>
+          <View style={[s.c, s.tl]} />
+          <View style={[s.c, s.tr]} />
+          <View style={[s.c, s.bl]} />
+          <View style={[s.c, s.br]} />
         </View>
       </View>
 
-      {isProcessing && (
-        <View style={styles.spinnerOverlay} pointerEvents="none">
+      {processing && (
+        <View style={s.spinner} pointerEvents="none">
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       )}
 
-      {cameraError && (
-        <View style={styles.errorOverlay}>
+      {error && (
+        <View style={s.errOverlay}>
           <MaterialCommunityIcons name="camera-off" size={48} color={colors.textMuted} />
-          <Text style={styles.errorText}>Camera error: {cameraError}</Text>
+          <Text style={s.errText}>Camera error: {error}</Text>
         </View>
       )}
 
-      <View style={styles.controls}>
-        {scannedThisSession.length > 0 && (
+      {/* Bottom controls */}
+      <View style={s.controls}>
+        {words.length > 0 && (
           <FlatList
             horizontal
-            data={scannedThisSession.slice(0, 20)}
-            keyExtractor={(item) => item.id}
+            data={words.slice(0, 20)}
+            keyExtractor={(w) => w.id}
             renderItem={({ item }) => (
-              <TouchableOpacity style={styles.wordChip} onPress={() => handleWordPress(item)}>
-                <Text style={styles.wordChipText}>{item.text}</Text>
+              <TouchableOpacity style={s.chip} onPress={() => tapWord(item)}>
+                <Text style={s.chipText}>{item.text}</Text>
               </TouchableOpacity>
             )}
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.wordListContent}
-            style={styles.wordList}
+            contentContainerStyle={s.chips}
+            style={s.chipList}
           />
         )}
 
-        <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+        <Animated.View style={{ transform: [{ scale: pulse }] }}>
           <TouchableOpacity
-            style={[styles.captureButton, isProcessing && styles.captureButtonProcessing]}
-            onPress={handleCapture}
-            disabled={captureDisabled}
+            style={[s.capBtn, processing && s.capBtnActive]}
+            onPress={capture}
+            disabled={!ready || processing}
             activeOpacity={0.8}
-            accessibilityLabel="Capture photo"
+            accessibilityLabel="Capture"
           >
-            <View style={[styles.captureInner, isProcessing && styles.captureInnerProcessing]} />
+            <View style={[s.capInner, processing && s.capInnerActive]} />
           </TouchableOpacity>
         </Animated.View>
 
-        <Text style={styles.captureHint}>
-          {scannedThisSession.length > 0
-            ? `${scannedThisSession.length} word${scannedThisSession.length !== 1 ? 's' : ''} found`
+        <Text style={s.hint}>
+          {words.length > 0
+            ? `${words.length} word${words.length !== 1 ? 's' : ''} found`
             : 'Tap to scan'}
         </Text>
       </View>
@@ -217,94 +210,80 @@ export default function ScannerScreen({ navigation }: ScannerScreenProps) {
 const CS = 28;
 const CW = 3;
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000' },
-  loadingContainer: {
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#000' },
+  center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#000',
+    backgroundColor: colors.background,
+    padding: spacing.xxxl,
   },
-  loadingText: {
-    color: '#fff',
-    marginTop: spacing.md,
-  },
-  errorOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
+
+  // Permission card
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radii.xxl,
+    padding: spacing.xxxl,
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.8)',
+    width: '100%',
+    maxWidth: 360,
+    ...shadows.lg,
   },
-  errorText: {
-    color: colors.textMuted,
-    marginTop: spacing.md,
-    textAlign: 'center',
-    paddingHorizontal: spacing.xxl,
+  cardTitle: { color: colors.text, fontSize: 18, fontWeight: '700', marginTop: spacing.lg },
+  cardText: { color: colors.textMuted, textAlign: 'center', marginVertical: spacing.lg },
+  cardBtn: {
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.lg,
+    borderRadius: radii.lg,
+    width: '100%',
+    alignItems: 'center',
   },
+  cardBtnText: { color: '#fff', fontWeight: '700' },
+
+  // Overlay
   overlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  spinnerOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.3)',
-  },
-  topBar: {
+  hintRow: {
     position: 'absolute',
     top: 50,
     left: 0,
     right: 0,
-    flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: spacing.xl,
   },
-  hintPill: {
+  pill: {
     backgroundColor: 'rgba(0,0,0,0.5)',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderRadius: radii.pill,
   },
-  hintText: {
-    color: '#fff',
+  pillText: { color: '#fff' },
+
+  frame: { width: 300, height: 220 },
+  c: { position: 'absolute', width: CS, height: CS },
+  tl: { top: 0, left: 0, borderTopWidth: CW, borderLeftWidth: CW, borderColor: colors.primary, borderTopLeftRadius: radii.sm },
+  tr: { top: 0, right: 0, borderTopWidth: CW, borderRightWidth: CW, borderColor: colors.primary, borderTopRightRadius: radii.sm },
+  bl: { bottom: 0, left: 0, borderBottomWidth: CW, borderLeftWidth: CW, borderColor: colors.primary, borderBottomLeftRadius: radii.sm },
+  br: { bottom: 0, right: 0, borderBottomWidth: CW, borderRightWidth: CW, borderColor: colors.primary, borderBottomRightRadius: radii.sm },
+
+  spinner: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.3)',
   },
-  scanFrame: {
-    width: 300,
-    height: 220,
-    position: 'relative',
+  errOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.8)',
   },
-  corner: {
-    position: 'absolute',
-    width: CS,
-    height: CS,
-  },
-  tl: {
-    top: 0, left: 0,
-    borderTopWidth: CW, borderLeftWidth: CW,
-    borderColor: colors.primary,
-    borderTopLeftRadius: radii.sm,
-  },
-  tr: {
-    top: 0, right: 0,
-    borderTopWidth: CW, borderRightWidth: CW,
-    borderColor: colors.primary,
-    borderTopRightRadius: radii.sm,
-  },
-  bl: {
-    bottom: 0, left: 0,
-    borderBottomWidth: CW, borderLeftWidth: CW,
-    borderColor: colors.primary,
-    borderBottomLeftRadius: radii.sm,
-  },
-  br: {
-    bottom: 0, right: 0,
-    borderBottomWidth: CW, borderRightWidth: CW,
-    borderColor: colors.primary,
-    borderBottomRightRadius: radii.sm,
-  },
+  errText: { color: colors.textMuted, marginTop: spacing.md, textAlign: 'center', paddingHorizontal: spacing.xxl },
+
+  // Controls
   controls: {
     position: 'absolute',
     bottom: 0,
@@ -313,25 +292,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: spacing.xxxl,
   },
-  wordList: {
-    marginBottom: spacing.lg,
-    maxHeight: 44,
-  },
-  wordListContent: {
-    paddingHorizontal: spacing.lg,
-    gap: spacing.sm,
-  },
-  wordChip: {
+  chipList: { marginBottom: spacing.lg, maxHeight: 44 },
+  chips: { paddingHorizontal: spacing.lg, gap: spacing.sm },
+  chip: {
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radii.pill,
   },
-  wordChipText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  captureButton: {
+  chipText: { color: '#fff', fontWeight: '600' },
+  capBtn: {
     width: 76,
     height: 76,
     borderRadius: 38,
@@ -341,72 +311,8 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: 'rgba(255,255,255,0.6)',
   },
-  captureButtonProcessing: {
-    borderColor: colors.primary,
-  },
-  captureInner: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#fff',
-  },
-  captureInnerProcessing: {
-    backgroundColor: colors.primary,
-  },
-  captureHint: {
-    color: 'rgba(255,255,255,0.7)',
-    marginTop: spacing.sm,
-  },
-  permissionContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xxxl,
-    backgroundColor: colors.background,
-  },
-  permissionCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.xxl,
-    padding: spacing.xxxl,
-    alignItems: 'center',
-    width: '100%',
-    maxWidth: 360,
-    ...shadows.lg,
-  },
-  permissionIconBg: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.primaryLight,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-  },
-  permissionIcon: { fontSize: 36 },
-  permissionTitle: {
-    color: colors.text,
-    marginBottom: spacing.sm,
-  },
-  permissionText: {
-    color: colors.textMuted,
-    textAlign: 'center',
-    marginBottom: spacing.xxl,
-  },
-  permissionButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.xxxl,
-    paddingVertical: spacing.lg,
-    borderRadius: radii.lg,
-    width: '100%',
-    alignItems: 'center',
-    ...shadows.lg,
-  },
-  permissionButtonText: {
-    color: '#fff',
-  },
-  permissionNote: {
-    color: colors.textMuted,
-    textAlign: 'center',
-    marginTop: spacing.lg,
-  },
+  capBtnActive: { borderColor: colors.primary },
+  capInner: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#fff' },
+  capInnerActive: { backgroundColor: colors.primary },
+  hint: { color: 'rgba(255,255,255,0.7)', marginTop: spacing.sm },
 });

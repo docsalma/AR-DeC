@@ -1,3 +1,8 @@
+/**
+ * ScannerScreen — Web version
+ * Uses getUserMedia directly (NOT expo-camera) to avoid Chrome bugs.
+ * Back camera only. No flip button.
+ */
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
@@ -16,119 +21,131 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { ScannedWord } from '../models/types';
 import { colors, spacing, radii, shadows } from '../theme';
 
-type ScannerScreenProps = {
+type Props = {
   navigation: NativeStackNavigationProp<any>;
 };
 
-export default function ScannerScreen({ navigation }: ScannerScreenProps) {
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [scannedThisSession, setScannedThisSession] = useState<ScannedWord[]>([]);
-  const [cameraActive, setCameraActive] = useState(false);
-  const [cameraError, setCameraError] = useState<string | null>(null);
+export default function ScannerScreen({ navigation }: Props) {
+  const [processing, setProcessing] = useState(false);
+  const [words, setWords] = useState<ScannedWord[]>([]);
+  const [started, setStarted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const addWord = useScanStore((s) => s.addWord);
 
-  // Start camera with getUserMedia directly (bypasses expo-camera web bugs)
+  // Clean up camera on unmount
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+      }
+    };
+  }, []);
+
+  // Start back camera only
   const startCamera = useCallback(async () => {
+    setError(null);
     try {
-      // Stop any existing stream first (Chrome requires this before switching)
+      // Always stop old stream first (Chrome requirement)
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
       }
 
+      // Request back camera — use "ideal" for compat, never "exact"
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: { ideal: 'environment' },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
         },
+        audio: false,
       });
 
       streamRef.current = stream;
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.setAttribute('playsinline', 'true');
+        videoRef.current.setAttribute('autoplay', 'true');
+        videoRef.current.muted = true;
         await videoRef.current.play();
       }
-      setCameraActive(true);
-      setCameraError(null);
+
+      setStarted(true);
     } catch (err: any) {
       if (err.name === 'NotAllowedError') {
-        setCameraError('Camera permission denied. Please allow camera access in your browser settings.');
-      } else if (err.name === 'NotFoundError') {
-        setCameraError('No camera found on this device.');
+        setError('Camera blocked. Allow camera in browser settings, then reload.');
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        setError('No camera found on this device.');
+      } else if (err.name === 'NotReadableError') {
+        setError('Camera is in use by another app. Close it and try again.');
       } else {
-        setCameraError(`Camera error: ${err.message}`);
+        setError(`Camera failed: ${err.message}`);
       }
     }
   }, []);
 
-  // Stop camera on unmount
-  useEffect(() => {
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => t.stop());
-      }
-    };
-  }, []);
+  // Capture current frame → OCR
+  const capture = useCallback(async () => {
+    if (!videoRef.current || !canvasRef.current || processing) return;
 
-  // Capture frame from video and run OCR
-  const handleCapture = useCallback(async () => {
-    if (!videoRef.current || !canvasRef.current || isProcessing) return;
-
-    setIsProcessing(true);
+    setProcessing(true);
     try {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
+      const v = videoRef.current;
+      const c = canvasRef.current;
+      c.width = v.videoWidth;
+      c.height = v.videoHeight;
+      const ctx = c.getContext('2d');
       if (!ctx) return;
-      ctx.drawImage(video, 0, 0);
+      ctx.drawImage(v, 0, 0);
 
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, 'image/jpeg', 0.8),
+      const blob = await new Promise<Blob | null>((res) =>
+        c.toBlob(res, 'image/jpeg', 0.85),
       );
       if (!blob) return;
 
       const uri = URL.createObjectURL(blob);
-      const blocks = await scanImage(uri);
-      const words = extractWords(blocks);
+      try {
+        const blocks = await scanImage(uri);
+        const extracted = extractWords(blocks);
 
-      const newWords: ScannedWord[] = words.map((w, i) => ({
-        id: `${Date.now()}-${i}`,
-        text: w.text,
-        context: w.context,
-        timestamp: Date.now(),
-        masteryLevel: 0,
-        explanations: [],
-      }));
+        const newWords: ScannedWord[] = extracted.map((w, i) => ({
+          id: `${Date.now()}-${i}`,
+          text: w.text,
+          context: w.context,
+          timestamp: Date.now(),
+          masteryLevel: 0,
+          explanations: [],
+        }));
 
-      for (const word of newWords) {
-        addWord(word);
-        onWordScanned(word.text);
+        for (const w of newWords) {
+          addWord(w);
+          onWordScanned(w.text);
+        }
+        setWords((prev) => [...newWords, ...prev]);
+
+        if (newWords.length === 0) {
+          Alert.alert('No text found', 'Point the camera at printed text and try again.');
+        }
+      } finally {
+        URL.revokeObjectURL(uri);
       }
-
-      setScannedThisSession((prev) => [...newWords, ...prev]);
-      URL.revokeObjectURL(uri);
-
-      if (newWords.length === 0) {
-        Alert.alert('No text detected', 'Try pointing the camera at printed text.');
-      }
-    } catch (error) {
-      if (error instanceof OcrError) {
-        Alert.alert('OCR Error', error.message);
+    } catch (err) {
+      if (err instanceof OcrError) {
+        Alert.alert('OCR Error', err.message);
       } else {
         Alert.alert('Scan Error', 'Failed to process image.');
       }
     } finally {
-      setIsProcessing(false);
+      setProcessing(false);
     }
-  }, [isProcessing, addWord]);
+  }, [processing, addWord]);
 
-  const handleWordPress = useCallback(
+  const tapWord = useCallback(
     (word: ScannedWord) => {
       useScanStore.getState().setCurrentWord(word);
       navigation.navigate('Result');
@@ -136,36 +153,30 @@ export default function ScannerScreen({ navigation }: ScannerScreenProps) {
     [navigation],
   );
 
-  // Camera not started yet — show start button
-  if (!cameraActive) {
+  // --- Not started: show start button ---
+  if (!started) {
     return (
-      <View style={styles.container}>
-        <View style={styles.content}>
-          <View style={styles.iconBg}>
-            <MaterialCommunityIcons name="camera" size={36} color={colors.primary} />
-          </View>
-          <Text style={styles.title}>Scan Text</Text>
-          <Text style={styles.subtitle}>
-            Use your camera to scan words from textbooks.
+      <View style={s.center}>
+        <View style={s.card}>
+          <MaterialCommunityIcons name="camera" size={48} color={colors.primary} />
+          <Text style={s.cardTitle}>Scan Text</Text>
+          <Text style={s.cardText}>
+            Open the back camera to scan words from textbooks.
           </Text>
-
-          {cameraError && (
-            <Text style={styles.errorText}>{cameraError}</Text>
-          )}
-
-          <TouchableOpacity style={styles.button} onPress={startCamera}>
+          {error && <Text style={s.errMsg}>{error}</Text>}
+          <TouchableOpacity style={s.cardBtn} onPress={startCamera}>
             <MaterialCommunityIcons name="camera" size={20} color="#fff" />
-            <Text style={styles.buttonText}>Open Camera</Text>
+            <Text style={s.cardBtnText}> Open Camera</Text>
           </TouchableOpacity>
         </View>
       </View>
     );
   }
 
-  // Camera active — show live feed
+  // --- Camera active: live feed ---
   return (
-    <View style={styles.cameraContainer}>
-      {/* Live camera via native <video> element — bypasses expo-camera web bugs */}
+    <View style={s.root}>
+      {/* Native <video> — direct getUserMedia, no expo-camera */}
       <video
         ref={videoRef as any}
         autoPlay
@@ -178,65 +189,65 @@ export default function ScannerScreen({ navigation }: ScannerScreenProps) {
           width: '100%',
           height: '100%',
           objectFit: 'cover',
+          background: '#000',
         }}
       />
-      {/* Hidden canvas for frame capture */}
+      {/* Hidden capture canvas */}
       <canvas ref={canvasRef as any} style={{ display: 'none' }} />
 
       {/* Scan frame overlay */}
-      <View style={styles.overlay} pointerEvents="box-none">
-        <View style={styles.topBar}>
-          <View style={styles.hintPill}>
-            <Text style={styles.hintText}>
-              {isProcessing ? 'Analyzing text...' : 'Align text within the frame'}
+      <View style={s.overlay} pointerEvents="box-none">
+        <View style={s.hintRow}>
+          <View style={s.pill}>
+            <Text style={s.pillText}>
+              {processing ? 'Analyzing...' : 'Point at text'}
             </Text>
           </View>
         </View>
-
-        <View style={styles.scanFrame}>
-          <View style={[styles.corner, styles.tl]} />
-          <View style={[styles.corner, styles.tr]} />
-          <View style={[styles.corner, styles.bl]} />
-          <View style={[styles.corner, styles.br]} />
+        <View style={s.frame}>
+          <View style={[s.co, s.tl]} />
+          <View style={[s.co, s.tr]} />
+          <View style={[s.co, s.bl]} />
+          <View style={[s.co, s.br]} />
         </View>
       </View>
 
-      {isProcessing && (
-        <View style={styles.spinnerOverlay} pointerEvents="none">
+      {processing && (
+        <View style={s.spinner} pointerEvents="none">
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       )}
 
-      {/* Controls */}
-      <View style={styles.controls}>
-        {scannedThisSession.length > 0 && (
+      {/* Bottom controls */}
+      <View style={s.controls}>
+        {words.length > 0 && (
           <FlatList
             horizontal
-            data={scannedThisSession.slice(0, 20)}
-            keyExtractor={(item) => item.id}
+            data={words.slice(0, 20)}
+            keyExtractor={(w) => w.id}
             renderItem={({ item }) => (
-              <TouchableOpacity style={styles.wordChip} onPress={() => handleWordPress(item)}>
-                <Text style={styles.wordChipText}>{item.text}</Text>
+              <TouchableOpacity style={s.chip} onPress={() => tapWord(item)}>
+                <Text style={s.chipText}>{item.text}</Text>
               </TouchableOpacity>
             )}
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.wordListContent}
-            style={styles.wordList}
+            contentContainerStyle={s.chips}
+            style={s.chipList}
           />
         )}
 
         <TouchableOpacity
-          style={[styles.captureButton, isProcessing && styles.captureButtonProcessing]}
-          onPress={handleCapture}
-          disabled={isProcessing}
+          style={[s.capBtn, processing && s.capBtnActive]}
+          onPress={capture}
+          disabled={processing}
           activeOpacity={0.8}
         >
-          <View style={[styles.captureInner, isProcessing && styles.captureInnerProcessing]} />
+          <View style={[s.capInner, processing && s.capInnerActive]} />
         </TouchableOpacity>
 
-        <Text style={styles.captureHint}>
-          {scannedThisSession.length > 0
-            ? `${scannedThisSession.length} word${scannedThisSession.length !== 1 ? 's' : ''} found`
+        <Text style={s.hint}>
+          {words.length > 0
+            ? `${words.length} word${words.length !== 1 ? 's' : ''} found`
             : 'Tap to scan'}
         </Text>
       </View>
@@ -247,150 +258,88 @@ export default function ScannerScreen({ navigation }: ScannerScreenProps) {
 const CS = 28;
 const CW = 3;
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  content: {
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#000', position: 'relative' as any },
+  center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.background,
     padding: spacing.xxxl,
   },
-  iconBg: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.primaryLight,
-    justifyContent: 'center',
+
+  // Card
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radii.xxl,
+    padding: spacing.xxxl,
     alignItems: 'center',
-    marginBottom: spacing.xl,
+    width: '100%',
+    maxWidth: 360,
+    ...shadows.lg,
   },
-  title: {
-    color: colors.text,
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: spacing.sm,
-  },
-  subtitle: {
-    color: colors.textMuted,
-    textAlign: 'center',
-    marginBottom: spacing.xxl,
-  },
-  errorText: {
-    color: colors.error,
-    textAlign: 'center',
-    marginBottom: spacing.lg,
-  },
-  button: {
+  cardTitle: { color: colors.text, fontSize: 20, fontWeight: '700', marginTop: spacing.lg },
+  cardText: { color: colors.textMuted, textAlign: 'center', marginVertical: spacing.lg },
+  cardBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
     backgroundColor: colors.primary,
-    paddingHorizontal: spacing.xxxl,
     paddingVertical: spacing.lg,
     borderRadius: radii.lg,
     width: '100%',
-    maxWidth: 320,
-    justifyContent: 'center',
-    ...shadows.lg,
   },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 16,
-  },
+  cardBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  errMsg: { color: colors.error, textAlign: 'center', marginBottom: spacing.lg, fontSize: 13 },
 
-  // Camera view
-  cameraContainer: { flex: 1, backgroundColor: '#000', position: 'relative' as any },
+  // Overlay
   overlay: {
     position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  spinnerOverlay: {
+  hintRow: { position: 'absolute', top: 20, left: 0, right: 0, alignItems: 'center' },
+  pill: {
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.pill,
+  },
+  pillText: { color: '#fff' },
+
+  frame: { width: 300, height: 220 },
+  co: { position: 'absolute', width: CS, height: CS },
+  tl: { top: 0, left: 0, borderTopWidth: CW, borderLeftWidth: CW, borderColor: colors.primary, borderTopLeftRadius: radii.sm },
+  tr: { top: 0, right: 0, borderTopWidth: CW, borderRightWidth: CW, borderColor: colors.primary, borderTopRightRadius: radii.sm },
+  bl: { bottom: 0, left: 0, borderBottomWidth: CW, borderLeftWidth: CW, borderColor: colors.primary, borderBottomLeftRadius: radii.sm },
+  br: { bottom: 0, right: 0, borderBottomWidth: CW, borderRightWidth: CW, borderColor: colors.primary, borderBottomRightRadius: radii.sm },
+
+  spinner: {
     position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.3)',
   },
-  topBar: {
-    position: 'absolute',
-    top: 20,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.xl,
-  },
-  hintPill: {
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderRadius: radii.pill,
-  },
-  hintText: { color: '#fff' },
-  scanFrame: {
-    width: 300,
-    height: 220,
-    position: 'relative',
-  },
-  corner: {
-    position: 'absolute',
-    width: CS,
-    height: CS,
-  },
-  tl: {
-    top: 0, left: 0,
-    borderTopWidth: CW, borderLeftWidth: CW,
-    borderColor: colors.primary,
-    borderTopLeftRadius: radii.sm,
-  },
-  tr: {
-    top: 0, right: 0,
-    borderTopWidth: CW, borderRightWidth: CW,
-    borderColor: colors.primary,
-    borderTopRightRadius: radii.sm,
-  },
-  bl: {
-    bottom: 0, left: 0,
-    borderBottomWidth: CW, borderLeftWidth: CW,
-    borderColor: colors.primary,
-    borderBottomLeftRadius: radii.sm,
-  },
-  br: {
-    bottom: 0, right: 0,
-    borderBottomWidth: CW, borderRightWidth: CW,
-    borderColor: colors.primary,
-    borderBottomRightRadius: radii.sm,
-  },
+
+  // Controls
   controls: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    bottom: 0, left: 0, right: 0,
     alignItems: 'center',
     paddingBottom: spacing.xxxl,
   },
-  wordList: {
-    marginBottom: spacing.lg,
-    maxHeight: 44,
-  },
-  wordListContent: {
-    paddingHorizontal: spacing.lg,
-    gap: spacing.sm,
-  },
-  wordChip: {
+  chipList: { marginBottom: spacing.lg, maxHeight: 44 },
+  chips: { paddingHorizontal: spacing.lg, gap: spacing.sm },
+  chip: {
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radii.pill,
   },
-  wordChipText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  captureButton: {
+  chipText: { color: '#fff', fontWeight: '600' },
+  capBtn: {
     width: 76,
     height: 76,
     borderRadius: 38,
@@ -400,20 +349,8 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: 'rgba(255,255,255,0.6)',
   },
-  captureButtonProcessing: {
-    borderColor: colors.primary,
-  },
-  captureInner: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#fff',
-  },
-  captureInnerProcessing: {
-    backgroundColor: colors.primary,
-  },
-  captureHint: {
-    color: 'rgba(255,255,255,0.7)',
-    marginTop: spacing.sm,
-  },
+  capBtnActive: { borderColor: colors.primary },
+  capInner: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#fff' },
+  capInnerActive: { backgroundColor: colors.primary },
+  hint: { color: 'rgba(255,255,255,0.7)', marginTop: spacing.sm },
 });
