@@ -26,16 +26,9 @@ export default function ScannerScreen({ navigation }: ScannerScreenProps) {
   const [permission, requestPermission] = useCameraPermissions();
   const [isProcessing, setIsProcessing] = useState(false);
   const [scannedThisSession, setScannedThisSession] = useState<ScannedWord[]>([]);
-  const [facing, setFacing] = useState<'front' | 'back'>('back');
   const [cameraReady, setCameraReady] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
-
-  const flipCamera = useCallback(() => {
-    setCameraReady(false);
-    setCameraError(null);
-    setFacing((f) => (f === 'back' ? 'front' : 'back'));
-  }, []);
 
   const addWord = useScanStore((s) => s.addWord);
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -133,7 +126,7 @@ export default function ScannerScreen({ navigation }: ScannerScreenProps) {
       <CameraView
         ref={cameraRef}
         style={StyleSheet.absoluteFillObject}
-        facing={facing}
+        facing="back"
         onCameraReady={() => setCameraReady(true)}
         onMountError={(e) => setCameraError(e.message)}
       />
@@ -145,13 +138,6 @@ export default function ScannerScreen({ navigation }: ScannerScreenProps) {
               {isProcessing ? 'Analyzing text...' : 'Align text within the frame'}
             </Text>
           </View>
-          <TouchableOpacity
-            style={styles.flipButton}
-            onPress={flipCamera}
-            accessibilityLabel="Flip camera"
-          >
-            <MaterialCommunityIcons name="camera-flip" size={20} color="#fff" />
-          </TouchableOpacity>
         </View>
 
         <View style={styles.scanFrame}>
@@ -262,17 +248,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.xl,
   },
-  flipButton: {
-    position: 'absolute',
-    right: spacing.xl,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  flipIcon: { fontSize: 20 },
   hintPill: {
     backgroundColor: 'rgba(0,0,0,0.5)',
     paddingHorizontal: spacing.lg,
