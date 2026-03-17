@@ -96,7 +96,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             <View style={styles.header}>
               <View>
                 <Text variant="headlineMedium" style={styles.greeting}>
-                  Hi, {profile.name}! {'\u{1F44B}'}
+                  Hi, {profile.name}!
                 </Text>
                 <View style={styles.levelRow}>
                   <Chip
@@ -114,7 +114,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
               </View>
               {profile.streakDays > 0 && (
                 <Surface style={styles.streakBadge} elevation={2}>
-                  <Text style={styles.streakIcon}>{'\u{1F525}'}</Text>
+                  <MaterialCommunityIcons name="fire" size={20} color={colors.secondary} />
                   <Text variant="titleMedium" style={styles.streakCount}>{profile.streakDays}</Text>
                   <Text variant="labelSmall" style={styles.streakLabel}>streak</Text>
                 </Surface>
@@ -219,7 +219,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             {recentWords.length === 0 && (
               <Card style={styles.emptyCard} mode="outlined">
                 <Card.Content style={styles.emptyContent}>
-                  <Text style={styles.emptyEmoji}>{'\u{1F4DA}'}</Text>
+                  <MaterialCommunityIcons name="book-open-variant" size={56} color={colors.primary} style={styles.emptyIcon} />
                   <Text variant="titleMedium" style={styles.emptyTitle}>
                     Ready to start learning?
                   </Text>
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
     borderColor: colors.outline,
   },
   emptyContent: { alignItems: 'center', padding: spacing.xxl },
-  emptyEmoji: { fontSize: 56, marginBottom: spacing.md },
+  emptyIcon: { marginBottom: spacing.md },
   emptyTitle: { color: colors.text, fontWeight: '700', textAlign: 'center' },
   emptyText: {
     color: colors.textSecondary,

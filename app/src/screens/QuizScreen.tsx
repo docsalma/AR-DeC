@@ -7,12 +7,20 @@ import {
   SafeAreaView,
   Animated,
 } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useScanStore } from '../store/scanStore';
 import { useStudentStore } from '../store/studentStore';
 import { onQuizAnswer } from '../services/gamificationService';
 import type { QuizQuestion } from '../models/types';
 import { colors, spacing, radii, shadows } from '../theme';
+
+const RESULT_ICONS: Record<string, { name: string; color: string }> = {
+  trophy: { name: 'trophy', color: colors.gold },
+  clap: { name: 'hand-clap', color: colors.secondary },
+  muscle: { name: 'arm-flex', color: colors.primary },
+  book: { name: 'book-open-variant', color: colors.textMuted },
+};
 
 type QuizScreenProps = {
   navigation: NativeStackNavigationProp<any>;
@@ -133,13 +141,13 @@ export default function QuizScreen({ navigation }: QuizScreenProps) {
   // Finished screen
   if (isFinished) {
     const percent = questions.length > 0 ? Math.round((score / questions.length) * 100) : 0;
-    const emoji = percent >= 80 ? '\u{1F3C6}' : percent >= 50 ? '\u{1F44F}' : percent > 0 ? '\u{1F4AA}' : '\u{1F4DA}';
+    const resultIcon = percent >= 80 ? RESULT_ICONS.trophy : percent >= 50 ? RESULT_ICONS.clap : percent > 0 ? RESULT_ICONS.muscle : RESULT_ICONS.book;
 
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.finishedContainer}>
           <View style={styles.finishedIconBg}>
-            <Text style={styles.finishedEmoji}>{emoji}</Text>
+            <MaterialCommunityIcons name={resultIcon.name as any} size={48} color={resultIcon.color} />
           </View>
           <Text style={styles.finishedTitle}>Quiz Complete!</Text>
           <Text style={styles.finishedScore}>
@@ -200,7 +208,9 @@ export default function QuizScreen({ navigation }: QuizScreenProps) {
       {/* Combo indicator */}
       {combo > 1 && (
         <View style={styles.comboBanner}>
-          <Text style={styles.comboText}>{'\u{1F525}'} {combo}x Combo!</Text>
+          <Text style={styles.comboText}>
+            <MaterialCommunityIcons name="fire" size={16} color={colors.secondary} /> {combo}x Combo!
+          </Text>
         </View>
       )}
 

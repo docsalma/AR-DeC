@@ -12,6 +12,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { scanImage, extractWords, OcrError } from '../services/ocrService';
 import { useScanStore } from '../store/scanStore';
 import { onWordScanned } from '../services/gamificationService';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { ScannedWord } from '../models/types';
 import { colors, spacing, radii, shadows } from '../theme';
 
@@ -79,7 +80,7 @@ export default function ScannerScreen({ navigation }: ScannerScreenProps) {
     <View style={styles.container}>
       <View style={styles.content}>
         <View style={styles.iconBg}>
-          <Text style={styles.icon}>{'\u{1F4F8}'}</Text>
+          <MaterialCommunityIcons name="camera" size={36} color={colors.primary} />
         </View>
         <Text style={styles.title}>Scan Text from Image</Text>
         <Text style={styles.subtitle}>

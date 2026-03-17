@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { scanImage, extractWords, OcrError } from '../services/ocrService';
 import { useScanStore } from '../store/scanStore';
@@ -30,7 +31,6 @@ export default function ScannerScreen({ navigation }: ScannerScreenProps) {
   const cameraRef = useRef<CameraView>(null);
 
   const flipCamera = useCallback(() => {
-    setCameraReady(false);
     setFacing((f) => (f === 'back' ? 'front' : 'back'));
   }, []);
 
@@ -99,7 +99,7 @@ export default function ScannerScreen({ navigation }: ScannerScreenProps) {
       <View style={styles.permissionContainer}>
         <View style={styles.permissionCard}>
           <View style={styles.permissionIconBg}>
-            <Text style={styles.permissionIcon}>{'\u{1F4F7}'}</Text>
+            <MaterialCommunityIcons name="camera" size={36} color={colors.primary} />
           </View>
           <Text style={styles.permissionTitle}>Camera Access</Text>
           <Text style={styles.permissionText}>
@@ -121,10 +121,10 @@ export default function ScannerScreen({ navigation }: ScannerScreenProps) {
   return (
     <View style={styles.container}>
       <CameraView
-        key={facing}
         ref={cameraRef}
         style={styles.camera}
         facing={facing}
+        active={!isProcessing}
         onCameraReady={() => setCameraReady(true)}
       />
 
@@ -140,7 +140,7 @@ export default function ScannerScreen({ navigation }: ScannerScreenProps) {
             onPress={flipCamera}
             accessibilityLabel="Flip camera"
           >
-            <Text style={styles.flipIcon}>{'\u{1F504}'}</Text>
+            <MaterialCommunityIcons name="camera-flip" size={20} color="#fff" />
           </TouchableOpacity>
         </View>
 

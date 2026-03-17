@@ -9,6 +9,7 @@ import {
   Chip,
   Searchbar,
 } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useScanStore } from '../store/scanStore';
 import { searchModels, getModelForWord, type Model3D } from '../services/modelService';
@@ -159,7 +160,7 @@ export default function ARViewScreen({ navigation }: ARViewScreenProps) {
       {/* 3D Viewer */}
       {error && !loading ? (
         <View style={styles.loadingContainer}>
-          <Text style={styles.noModelEmoji}>{'\u26A0\uFE0F'}</Text>
+          <MaterialCommunityIcons name="alert-circle-outline" size={48} color="rgba(255,255,255,0.7)" />
           <Text variant="titleMedium" style={styles.noModelText}>
             {error}
           </Text>
@@ -178,7 +179,7 @@ export default function ARViewScreen({ navigation }: ARViewScreenProps) {
         <SketchfabViewer embedUrl={selectedModel.embedUrl} />
       ) : (
         <View style={styles.loadingContainer}>
-          <Text style={styles.noModelEmoji}>{'\u{1F50D}'}</Text>
+          <MaterialCommunityIcons name="magnify" size={48} color="rgba(255,255,255,0.7)" />
           <Text variant="titleMedium" style={styles.noModelText}>
             No 3D models found
           </Text>

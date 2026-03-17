@@ -14,6 +14,7 @@ import { useStudentStore } from '../store/studentStore';
 import { getExplanation } from '../services/itsService';
 import { onWordRead } from '../services/gamificationService';
 import PointsAnimation from '../components/PointsAnimation';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { Explanation } from '../models/types';
 import { POINTS } from '../models/types';
 import { colors, spacing, radii, shadows } from '../theme';
@@ -46,7 +47,7 @@ export default function ResultScreen({ navigation }: ResultScreenProps) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>{'\u{1F50E}'}</Text>
+          <MaterialCommunityIcons name="magnify" size={48} color={colors.textMuted} />
           <Text style={styles.emptyTitle}>No word selected</Text>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Text style={styles.backButtonText}>{'\u2190'} Go Back</Text>
@@ -93,7 +94,7 @@ export default function ResultScreen({ navigation }: ResultScreenProps) {
           <>
             <View style={styles.card}>
               <View style={styles.cardHeader}>
-                <Text style={styles.cardIcon}>{'\u{1F4D6}'}</Text>
+                <MaterialCommunityIcons name="book-open-page-variant" size={18} color={colors.primary} />
                 <Text style={styles.cardTitle}>Definition</Text>
                 <View style={styles.bloomsTag}>
                   <Text style={styles.bloomsText}>{explanation.bloomsLevel}</Text>
@@ -105,7 +106,7 @@ export default function ResultScreen({ navigation }: ResultScreenProps) {
             {explanation.examples.length > 0 && (
               <View style={styles.card}>
                 <View style={styles.cardHeader}>
-                  <Text style={styles.cardIcon}>{'\u{1F4AC}'}</Text>
+                  <MaterialCommunityIcons name="comment-text-outline" size={18} color={colors.primary} />
                   <Text style={styles.cardTitle}>Examples</Text>
                 </View>
                 {explanation.examples.map((ex, i) => (
@@ -120,7 +121,7 @@ export default function ResultScreen({ navigation }: ResultScreenProps) {
             {explanation.relatedConcepts.length > 0 && (
               <View style={styles.card}>
                 <View style={styles.cardHeader}>
-                  <Text style={styles.cardIcon}>{'\u{1F517}'}</Text>
+                  <MaterialCommunityIcons name="link-variant" size={18} color={colors.primary} />
                   <Text style={styles.cardTitle}>Related</Text>
                 </View>
                 <View style={styles.conceptRow}>
@@ -147,7 +148,7 @@ export default function ResultScreen({ navigation }: ResultScreenProps) {
             style={styles.actionButton}
             onPress={() => navigation.navigate('ARView')}
           >
-            <Text style={styles.actionIcon}>{'\u{1F50D}'}</Text>
+            <MaterialCommunityIcons name="cube-scan" size={18} color={colors.text} />
             <Text style={styles.actionText}>View in AR</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -160,7 +161,7 @@ export default function ResultScreen({ navigation }: ResultScreenProps) {
               navigation.navigate('Quiz');
             }}
           >
-            <Text style={styles.actionIcon}>{'\u{1F9E0}'}</Text>
+            <MaterialCommunityIcons name="brain" size={18} color="#fff" />
             <Text style={[styles.actionText, styles.actionTextPrimary]}>Quiz Me</Text>
           </TouchableOpacity>
         </View>

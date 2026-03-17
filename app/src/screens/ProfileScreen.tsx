@@ -6,6 +6,7 @@ import {
   ScrollView,
   SafeAreaView,
 } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useStudentStore } from '../store/studentStore';
 import { useGamificationStore } from '../store/gamificationStore';
 import { useScanStore } from '../store/scanStore';
@@ -50,7 +51,7 @@ export default function ProfileScreen() {
         {/* Stats grid */}
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
-            <Text style={styles.statEmoji}>{'\u2B50'}</Text>
+            <MaterialCommunityIcons name="star" size={22} color={colors.gold} style={styles.statIcon} />
             <Text style={styles.statValue}>{profile.points}</Text>
             <Text style={styles.statLabel}>Points</Text>
           </View>
@@ -58,12 +59,12 @@ export default function ProfileScreen() {
             <StreakCounter days={profile.streakDays} compact />
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statEmoji}>{'\u{1F4DA}'}</Text>
+            <MaterialCommunityIcons name="book-open-variant" size={22} color={colors.primary} style={styles.statIcon} />
             <Text style={styles.statValue}>{scannedWords.length}</Text>
             <Text style={styles.statLabel}>Words</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statEmoji}>{'\u{1F3AF}'}</Text>
+            <MaterialCommunityIcons name="bullseye-arrow" size={22} color={colors.tertiary} style={styles.statIcon} />
             <Text style={styles.statValue}>{masteredWords.length}</Text>
             <Text style={styles.statLabel}>Mastered</Text>
           </View>
@@ -101,9 +102,12 @@ export default function ProfileScreen() {
                   key={badge.id}
                   style={[styles.badgeItem, earned && styles.badgeEarned]}
                 >
-                  <Text style={[styles.badgeIcon, !earned && styles.badgeLocked]}>
-                    {badge.icon}
-                  </Text>
+                  <MaterialCommunityIcons
+                    name={badge.icon as any}
+                    size={28}
+                    color={earned ? colors.secondary : colors.textMuted}
+                    style={!earned && styles.badgeLocked}
+                  />
                   <Text
                     style={[styles.badgeName, !earned && styles.badgeNameLocked]}
                     numberOfLines={1}
@@ -208,7 +212,7 @@ const styles = StyleSheet.create({
     minHeight: 80,
     ...shadows.sm,
   },
-  statEmoji: { fontSize: 22, marginBottom: spacing.xs },
+  statIcon: { marginBottom: spacing.xs },
   statValue: {
     fontSize: 24, fontWeight: '800',
     color: colors.text,
@@ -272,7 +276,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.gold,
   },
-  badgeIcon: { fontSize: 28 },
   badgeLocked: { opacity: 0.3 },
   badgeName: {
     fontSize: 10, fontWeight: '600',

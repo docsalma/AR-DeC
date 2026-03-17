@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text, Surface } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors, spacing } from '../theme';
 
 interface StreakCounterProps {
@@ -20,9 +21,12 @@ export default function StreakCounter({ days, compact }: StreakCounterProps) {
       ]}
       elevation={isActive ? 2 : 0}
     >
-      <Text style={[styles.icon, !isActive && styles.iconInactive]}>
-        {isActive ? '\u{1F525}' : '\u{2744}\u{FE0F}'}
-      </Text>
+      <MaterialCommunityIcons
+        name={isActive ? 'fire' : 'snowflake'}
+        size={22}
+        color={isActive ? colors.secondary : colors.textMuted}
+        style={!isActive && styles.iconInactive}
+      />
       <View>
         <Text variant={compact ? 'labelLarge' : 'titleLarge'} style={styles.count}>
           {days}
