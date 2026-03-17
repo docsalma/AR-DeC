@@ -31,6 +31,8 @@ export default function ScannerScreen({ navigation }: ScannerScreenProps) {
   const [cameraReady, setCameraReady] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
+  // Force-remount key: fixes Chrome/Safari bug where camera shows black after permission grant
+  const [cameraKey, setCameraKey] = useState(0);
 
   const addWord = useScanStore((s) => s.addWord);
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -110,7 +112,14 @@ export default function ScannerScreen({ navigation }: ScannerScreenProps) {
           <Text style={styles.permissionText}>
             AR-DeC needs your camera to scan text from textbooks and create AR overlays.
           </Text>
-          <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
+          <TouchableOpacity
+            style={styles.permissionButton}
+            onPress={async () => {
+              await requestPermission();
+              // Force remount camera after permission grant (Chrome/Safari fix)
+              setCameraKey((k) => k + 1);
+            }}
+          >
             <Text style={styles.permissionButtonText}>Enable Camera</Text>
           </TouchableOpacity>
           <Text style={styles.permissionNote}>
@@ -127,6 +136,7 @@ export default function ScannerScreen({ navigation }: ScannerScreenProps) {
     <View style={styles.container}>
       {isFocused && (
         <CameraView
+          key={`cam-${cameraKey}`}
           ref={cameraRef}
           style={StyleSheet.absoluteFillObject}
           facing="back"
