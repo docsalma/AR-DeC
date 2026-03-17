@@ -66,6 +66,70 @@ export async function searchModels(query: string, count: number = 6): Promise<Mo
  * Get a relevant 3D model for a scanned word.
  * First tries the word itself, then falls back to category keywords.
  */
+// ─── GLTF Models for AR Camera Overlay ─────────────────────────────────────
+// Free models from KhronosGroup glTF-Sample-Assets (GitHub raw CDN)
+const GLTF_CDN = 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models';
+
+const GLTF_MODEL_MAP: Record<string, { file: string; label: string }> = {
+  duck:       { file: 'Duck/glTF-Binary/Duck.glb',                   label: 'Duck' },
+  avocado:    { file: 'Avocado/glTF-Binary/Avocado.glb',             label: 'Avocado' },
+  brain:      { file: 'BrainStem/glTF-Binary/BrainStem.glb',         label: 'Brain Stem' },
+  box:        { file: 'BoxTextured/glTF-Binary/BoxTextured.glb',     label: 'Textured Box' },
+  helmet:     { file: 'DamagedHelmet/glTF-Binary/DamagedHelmet.glb', label: 'Sci-Fi Helmet' },
+  lantern:    { file: 'Lantern/glTF-Binary/Lantern.glb',             label: 'Lantern' },
+  barramundi: { file: 'BarramundiFish/glTF-Binary/BarramundiFish.glb', label: 'Barramundi Fish' },
+  suzanne:    { file: 'Suzanne/glTF/Suzanne.gltf',                   label: 'Suzanne (Monkey)' },
+};
+
+// Map educational categories to model keys
+const CATEGORY_MODEL_MAP: Record<string, string> = {
+  science: 'brain',
+  biology: 'brain',
+  nature: 'avocado',
+  food: 'avocado',
+  animal: 'duck',
+  fish: 'barramundi',
+  ocean: 'barramundi',
+  water: 'barramundi',
+  light: 'lantern',
+  history: 'helmet',
+  space: 'helmet',
+  math: 'box',
+  geometry: 'box',
+};
+
+export interface GltfModel {
+  url: string;
+  label: string;
+  isProcedural: boolean;
+}
+
+/**
+ * Get a GLTF model URL for a word — used by ARScene for camera overlay.
+ * Exact match → category match → procedural box fallback.
+ */
+export function getGltfUrlForWord(word: string): GltfModel {
+  const lower = word.toLowerCase();
+
+  // Exact match against model map keys
+  for (const [key, model] of Object.entries(GLTF_MODEL_MAP)) {
+    if (lower.includes(key) || key.includes(lower)) {
+      return { url: `${GLTF_CDN}/${model.file}`, label: model.label, isProcedural: false };
+    }
+  }
+
+  // Category match
+  for (const [keyword, modelKey] of Object.entries(CATEGORY_MODEL_MAP)) {
+    if (lower.includes(keyword)) {
+      const model = GLTF_MODEL_MAP[modelKey];
+      return { url: `${GLTF_CDN}/${model.file}`, label: model.label, isProcedural: false };
+    }
+  }
+
+  // Fallback — signal to ARScene to render procedural geometry
+  return { url: '', label: word, isProcedural: true };
+}
+
 export async function getModelForWord(word: string): Promise<Model3D | null> {
   // Try the word directly first
   let models = await searchModels(word + ' low poly', 3);

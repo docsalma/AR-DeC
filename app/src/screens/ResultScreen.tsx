@@ -149,7 +149,7 @@ export default function ResultScreen({ navigation }: ResultScreenProps) {
             onPress={() => navigation.navigate('ARView')}
           >
             <MaterialCommunityIcons name="cube-scan" size={18} color={colors.text} />
-            <Text style={styles.actionText}>View in AR</Text>
+            <Text style={styles.actionText}>View in 3D</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionButton, styles.actionButtonPrimary]}

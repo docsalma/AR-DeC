@@ -12,6 +12,7 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useIsFocused } from '@react-navigation/native';
 import { scanImage, extractWords, OcrError } from '../services/ocrService';
 import { useScanStore } from '../store/scanStore';
 import { onWordScanned } from '../services/gamificationService';
@@ -23,6 +24,7 @@ type ScannerScreenProps = {
 };
 
 export default function ScannerScreen({ navigation }: ScannerScreenProps) {
+  const isFocused = useIsFocused();
   const [permission, requestPermission] = useCameraPermissions();
   const [isProcessing, setIsProcessing] = useState(false);
   const [scannedThisSession, setScannedThisSession] = useState<ScannedWord[]>([]);
@@ -123,13 +125,15 @@ export default function ScannerScreen({ navigation }: ScannerScreenProps) {
 
   return (
     <View style={styles.container}>
-      <CameraView
-        ref={cameraRef}
-        style={StyleSheet.absoluteFillObject}
-        facing="back"
-        onCameraReady={() => setCameraReady(true)}
-        onMountError={(e) => setCameraError(e.message)}
-      />
+      {isFocused && (
+        <CameraView
+          ref={cameraRef}
+          style={StyleSheet.absoluteFillObject}
+          facing="back"
+          onCameraReady={() => setCameraReady(true)}
+          onMountError={(e) => setCameraError(e.message)}
+        />
+      )}
 
       <View style={styles.overlay} pointerEvents="box-none">
         <View style={styles.topBar}>
