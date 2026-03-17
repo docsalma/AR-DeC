@@ -28,9 +28,12 @@ export default function ScannerScreen({ navigation }: ScannerScreenProps) {
   const [scannedThisSession, setScannedThisSession] = useState<ScannedWord[]>([]);
   const [facing, setFacing] = useState<'front' | 'back'>('back');
   const [cameraReady, setCameraReady] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
 
   const flipCamera = useCallback(() => {
+    setCameraReady(false);
+    setCameraError(null);
     setFacing((f) => (f === 'back' ? 'front' : 'back'));
   }, []);
 
@@ -92,7 +95,14 @@ export default function ScannerScreen({ navigation }: ScannerScreenProps) {
     [navigation],
   );
 
-  if (!permission) return <View style={styles.container} />;
+  if (!permission) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={styles.loadingText}>Starting camera…</Text>
+      </View>
+    );
+  }
 
   if (!permission.granted) {
     return (
@@ -122,10 +132,10 @@ export default function ScannerScreen({ navigation }: ScannerScreenProps) {
     <View style={styles.container}>
       <CameraView
         ref={cameraRef}
-        style={styles.camera}
+        style={StyleSheet.absoluteFillObject}
         facing={facing}
-        active={!isProcessing}
         onCameraReady={() => setCameraReady(true)}
+        onMountError={(e) => setCameraError(e.message)}
       />
 
       <View style={styles.overlay} pointerEvents="box-none">
@@ -155,6 +165,13 @@ export default function ScannerScreen({ navigation }: ScannerScreenProps) {
       {isProcessing && (
         <View style={styles.spinnerOverlay} pointerEvents="none">
           <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      )}
+
+      {cameraError && (
+        <View style={styles.errorOverlay}>
+          <MaterialCommunityIcons name="camera-off" size={48} color={colors.textMuted} />
+          <Text style={styles.errorText}>Camera error: {cameraError}</Text>
         </View>
       )}
 
@@ -202,7 +219,28 @@ const CW = 3;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  camera: { flex: 1 },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000',
+  },
+  loadingText: {
+    color: '#fff',
+    marginTop: spacing.md,
+  },
+  errorOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.8)',
+  },
+  errorText: {
+    color: colors.textMuted,
+    marginTop: spacing.md,
+    textAlign: 'center',
+    paddingHorizontal: spacing.xxl,
+  },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
