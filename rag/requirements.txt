@@ -1,2 +1,0 @@
-weaviate-client==4.9.6
-rich>=13.0

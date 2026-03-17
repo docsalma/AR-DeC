@@ -7,23 +7,11 @@ dist/
 _expo/
 web-build/
 
-# Research data (PDFs, Zotero exports — too large for git)
-.claude/used-Data/
-.claude/data zotero/
-
-# RAG Docker volumes
-rag/data/
-
-# LaTeX build artifacts
-*.aux
-*.bbl
-*.blg
-*.log
-*.out
-*.synctex.gz
-*.fdb_latexmk
-*.fls
-*.pdf
+# Non-app folders (kept locally, not on GitHub)
+.claude/
+article/
+agents/
+rag/
 
 # OS
 .DS_Store

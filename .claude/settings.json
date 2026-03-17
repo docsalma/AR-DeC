@@ -1,8 +1,0 @@
-{
-  "extraKnownMarketplaces": {
-    "ar-dec-local": {
-      "source": "directory",
-      "path": ".claude/plugins/eng-context-mgmt"
-    }
-  }
-}
