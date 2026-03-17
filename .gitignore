@@ -10,6 +10,7 @@ web-build/
 # Non-app folders (kept locally, not on GitHub)
 .claude/
 article/
+article2/
 agents/
 rag/
 
